@@ -1,0 +1,41 @@
+{
+  "Name": "Apple Music Now Playing",
+  "Author": "Alexis Martin",
+  "UUID": "com.alexismartin.applemusic-nowplaying",
+  "Icon": "imgs/plugin/category-icon",
+  "Description": "Affiche le titre en cours de lecture sur Apple Music (Windows) et permet de mettre en pause/reprendre.",
+  "CodePath": "bin/plugin.js",
+  "SDKVersion": 2,
+  "Version": "1.0.0.0",
+  "Software": {
+    "MinimumVersion": "6.5"
+  },
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Nodejs": {
+    "Version": "20"
+  },
+  "Category": "Apple Music Now Playing",
+  "CategoryIcon": "imgs/plugin/category-icon",
+  "Actions": [
+    {
+      "Name": "Now Playing",
+      "UUID": "com.alexismartin.applemusic-nowplaying.nowplaying",
+      "Icon": "imgs/actions/now-playing/icon",
+      "Tooltip": "Affiche le morceau en cours sur Apple Music. Appui court = pause/lecture.",
+      "PropertyInspectorPath": "ui/now-playing.html",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/actions/now-playing/key",
+          "TitleAlignment": "bottom",
+          "FontSize": 12
+        }
+      ]
+    }
+  ]
+}

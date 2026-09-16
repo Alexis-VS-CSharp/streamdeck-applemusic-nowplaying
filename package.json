@@ -1,0 +1,24 @@
+{
+  "name": "applemusic-nowplaying",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Stream Deck plugin: affiche la lecture en cours d'Apple Music (Windows) sur une touche.",
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart com.alexismartin.applemusic-nowplaying\""
+  },
+  "type": "module",
+  "devDependencies": {
+    "@elgato/cli": "^1.4.0",
+    "@rollup/plugin-commonjs": "^28.0.0",
+    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.0",
+    "@types/node": "^22.20.3",
+    "rollup": "^4.24.0",
+    "typescript": "^5.6.0"
+  },
+  "dependencies": {
+    "@elgato/streamdeck": "^2.1.0"
+  }
+}
