@@ -46,14 +46,19 @@ class NowPlayingService extends EventEmitter {
 		}
 		this.filter = filter;
 		this.stopWatcher();
+		this.startWatcher(filter);
+	}
 
+	/** Lance le process de polling ; se relance seul s'il crashe (ex: exception COM/WinRT rare cote bridge) tant qu'une action l'utilise encore. */
+	private startWatcher(filter: string): void {
 		streamDeck.logger.info(`NowPlayingService: starting watcher (filter="${filter}")`);
-		this.watcher = spawn(
+		const proc = spawn(
 			BRIDGE_PATH,
 			["-Filter", filter, "-IntervalMs", String(POLL_INTERVAL_MS)],
 			{ windowsHide: true }
 		);
-		const rl = createInterface({ input: this.watcher.stdout });
+		this.watcher = proc;
+		const rl = createInterface({ input: proc.stdout });
 		rl.on("line", (line) => {
 			const trimmed = line.trim();
 			if (!trimmed) return;
@@ -64,12 +69,20 @@ class NowPlayingService extends EventEmitter {
 				/* ignore malformed line */
 			}
 		});
-		this.watcher.stderr.on("data", (chunk: Buffer) => {
+		proc.stderr.on("data", (chunk: Buffer) => {
 			streamDeck.logger.warn(`NowPlayingBridge: ${chunk.toString().trim()}`);
 		});
-		this.watcher.on("exit", (code) => {
+		// Comparaison par reference : si stopWatcher() ou un nouveau
+		// startWatcher() ont deja remplace this.watcher, cette sortie est
+		// attendue (kill volontaire) et ne doit pas relancer un doublon.
+		proc.on("exit", (code) => {
 			streamDeck.logger.info(`NowPlayingBridge exited (code=${code})`);
-			this.watcher = null;
+			if (this.watcher === proc) {
+				this.watcher = null;
+				if (this.refCount > 0) {
+					setTimeout(() => this.startWatcher(filter), 500);
+				}
+			}
 		});
 	}
 
