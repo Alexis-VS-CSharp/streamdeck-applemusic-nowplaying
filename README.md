@@ -18,9 +18,6 @@ Plugin Stream Deck (Windows) pour piloter **Apple Music for Windows** depuis un 
 - Volume + / Volume - / Muet — agissent directement sur la session audio d'Apple Music dans le **mixeur de volume Windows** (pas le volume système global).
 - Lancer une playlist / album : bouton dont l'icône est la pochette (plein cadre, sans texte), qui ouvre et **démarre réellement** la lecture dans l'app Apple Music (pas juste un lien qui ouvre le navigateur).
 
-### Icon Pack séparé
-Le dossier [`com.alexismartin.applemusic-logos.sdIconPack`](com.alexismartin.applemusic-logos.sdIconPack) installe le logo officiel Apple Music (couleur/blanc/noir) comme icône réutilisable pour n'importe quel bouton, dossier ou profil Stream Deck — indépendamment de ce plugin.
-
 ## Prérequis
 
 - Windows 10/11.
@@ -61,14 +58,6 @@ powershell -File build-bridge/build.ps1
 ```
 
 Le binaire compilé est copié automatiquement dans `com.alexismartin.applemusic-nowplaying.sdPlugin/resources/`.
-
-## Installer l'icon pack Apple Music
-
-```bash
-cp -r com.alexismartin.applemusic-logos.sdIconPack "$APPDATA/Elgato/StreamDeck/IconPacks/"
-```
-
-Puis redémarrer l'app Stream Deck. Pour l'utiliser : clic sur l'icône d'un bouton/dossier/profil dans le panneau de droite → l'éditeur d'icône s'ouvre → onglet **Icons** → chercher "Apple Music" (le pack apparaît aussi en parcourant la liste des packs installés).
 
 ## Comment ça marche
 
