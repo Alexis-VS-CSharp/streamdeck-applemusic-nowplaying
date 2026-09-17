@@ -205,7 +205,12 @@ public static class AppleMusicVolume
     private static List<ISimpleAudioVolume> FindSessionVolumes()
     {
         var result = new List<ISimpleAudioVolume>();
-        var procs = System.Diagnostics.Process.GetProcessesByName("AppleMusic");
+        // AppleMusic.exe est le process UI ; AMPLibraryAgent.exe (meme paquet)
+        // est l'agent qui rend reellement l'audio - la session audio vivante
+        // est portee par ce dernier, pas par AppleMusic.exe.
+        var procs = System.Diagnostics.Process.GetProcessesByName("AppleMusic")
+            .Concat(System.Diagnostics.Process.GetProcessesByName("AMPLibraryAgent"))
+            .ToArray();
         if (procs.Length == 0) return result;
         var pids = new HashSet<int>();
         foreach (var p in procs) pids.Add(p.Id);
@@ -248,6 +253,61 @@ public static class AppleMusicVolume
             }
         }
         return result;
+    }
+
+    /// <summary>Diagnostic : liste toutes les sessions audio actives (tous devices), sans filtre de pid.</summary>
+    public static void PrintAllSessions()
+    {
+        var enumeratorType = Type.GetTypeFromCLSID(new Guid("BCDE0395-E52F-467C-8E3D-C4579291692E"));
+        var enumerator = (IMMDeviceEnumerator)Activator.CreateInstance(enumeratorType);
+
+        IMMDeviceCollection devices;
+        enumerator.EnumAudioEndpoints(0, 1, out devices);
+        int deviceCount;
+        devices.GetCount(out deviceCount);
+
+        for (int d = 0; d < deviceCount; d++)
+        {
+            IMMDevice device;
+            devices.Item(d, out device);
+            string deviceId;
+            device.GetId(out deviceId);
+
+            object sessionManagerObj;
+            var iidSessionManager2 = typeof(IAudioSessionManager2).GUID;
+            device.Activate(ref iidSessionManager2, 0x17, IntPtr.Zero, out sessionManagerObj);
+            var sessionManager = sessionManagerObj as IAudioSessionManager2;
+            if (sessionManager == null) continue;
+
+            IAudioSessionEnumerator sessionEnumerator;
+            sessionManager.GetSessionEnumerator(out sessionEnumerator);
+            int count;
+            sessionEnumerator.GetCount(out count);
+
+            Console.WriteLine("device[" + d + "] " + deviceId + " sessions=" + count);
+
+            for (int i = 0; i < count; i++)
+            {
+                IAudioSessionControl control;
+                sessionEnumerator.GetSession(i, out control);
+                var control2 = control as IAudioSessionControl2;
+                if (control2 == null) continue;
+                int pid;
+                control2.GetProcessId(out pid);
+                string procName = "?";
+                try { procName = System.Diagnostics.Process.GetProcessById(pid).ProcessName; } catch { }
+
+                var vol = control as ISimpleAudioVolume;
+                float level = -1;
+                bool muted = false;
+                if (vol != null)
+                {
+                    vol.GetMasterVolume(out level);
+                    vol.GetMute(out muted);
+                }
+                Console.WriteLine("  session[" + i + "] pid=" + pid + " proc=" + procName + " vol=" + level + " mute=" + muted);
+            }
+        }
     }
 
     public static void Adjust(float delta)
@@ -412,6 +472,12 @@ public static class EntryPoint
         {
             var muted = AppleMusicVolume.ToggleMute();
             Console.WriteLine(muted.HasValue ? (muted.Value ? "true" : "false") : "unknown");
+            return 0;
+        }
+
+        if (action == "VolumeDiag")
+        {
+            AppleMusicVolume.PrintAllSessions();
             return 0;
         }
 
