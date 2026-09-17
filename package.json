@@ -5,7 +5,8 @@
   "description": "Stream Deck plugin: affiche la lecture en cours d'Apple Music (Windows) sur une touche.",
   "scripts": {
     "build": "rollup -c",
-    "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart com.alexismartin.applemusic-nowplaying\""
+    "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart com.alexismartin.applemusic-nowplaying\"",
+    "pack": "npm run build && streamdeck pack com.alexismartin.applemusic-nowplaying.sdPlugin --force"
   },
   "type": "module",
   "devDependencies": {

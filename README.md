@@ -26,6 +26,10 @@ Plugin Stream Deck (Windows) pour piloter **Apple Music for Windows** depuis un 
 - [Node.js 20+](https://nodejs.org/).
 - Pour recompiler le bridge C# (optionnel, un binaire précompilé est déjà fourni) : aucune installation supplémentaire, `csc.exe` et les `.winmd` nécessaires sont fournis avec Windows.
 
+## Installation simple (sans dev)
+
+Télécharger le fichier [`com.alexismartin.applemusic-nowplaying.streamDeckPlugin`](com.alexismartin.applemusic-nowplaying.streamDeckPlugin) et double-cliquer dessus : Stream Deck l'installe automatiquement.
+
 ## Installation locale (dev)
 
 ```bash
@@ -58,6 +62,12 @@ powershell -File build-bridge/build.ps1
 ```
 
 Le binaire compilé est copié automatiquement dans `com.alexismartin.applemusic-nowplaying.sdPlugin/resources/`.
+
+### Régénérer le `.streamDeckPlugin`
+
+```bash
+npm run pack
+```
 
 ## Comment ça marche
 
