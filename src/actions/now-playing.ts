@@ -68,11 +68,7 @@ function scrollText(text: string, pos: number, window: number, separator: string
 	}
 	const cycle = text + separator;
 	const looped = cycle + cycle;
-	const frame = looped.slice(pos, pos + window);
-	// Le rendu Stream Deck tronque les espaces en debut de texte, ce qui
-	// "avale" une frame d'animation quand le defilement tombe pile dessus.
-	// Une espace insecable a le meme rendu visuel mais n'est pas tronquee.
-	return frame.startsWith(" ") ? " " + frame.slice(1) : frame;
+	return looped.slice(pos, pos + window);
 }
 
 /** Avance un FieldState d'un cran ; renvoie true si le texte affiche a change. */
@@ -84,10 +80,21 @@ function tickField(state: FieldState, window: number, separator: string): boolea
 		state.hold -= 1;
 		return false;
 	}
-	const cycleLen = state.text.length + separator.length;
-	state.pos += 1;
-	if (state.pos >= cycleLen) {
-		state.pos = 0;
+	const cycle = state.text + separator;
+	const cycleLen = cycle.length;
+	let next = state.pos + 1;
+	if (next >= cycleLen) {
+		next = 0;
+	} else if (cycle[next] === " ") {
+		// Une frame qui commence par une espace est tronquee au rendu Stream
+		// Deck (donne l'impression d'un double palier) : on saute dessus.
+		next += 1;
+		if (next >= cycleLen) {
+			next = 0;
+		}
+	}
+	state.pos = next;
+	if (state.pos === 0) {
 		state.hold = SCROLL_HOLD_TICKS;
 	}
 	return true;
