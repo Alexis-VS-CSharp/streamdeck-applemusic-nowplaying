@@ -197,10 +197,11 @@ public static class NowPlayingBridge
 
 public static class AppleMusicVolume
 {
-    // Apple Music (UWP) ouvre plusieurs sessions audio pour un seul process
-    // (ex: une tranche "reelle" et une tranche silencieuse/inactive) : il faut
-    // agir sur toutes celles du process, sinon on risque de piloter celle qui
-    // ne produit aucun son pendant que l'autre reste audible.
+    // Apple Music (UWP) peut avoir des sessions audio actives sur PLUSIEURS
+    // periphériques de sortie a la fois (ex: sortie audio par-app differente
+    // du peripherique par defaut) : se limiter au device par defaut ratait
+    // la session reellement audible. On parcourt donc tous les peripheriques
+    // de rendu actifs et on agit sur toutes les sessions du process trouvees.
     private static List<ISimpleAudioVolume> FindSessionVolumes()
     {
         var result = new List<ISimpleAudioVolume>();
@@ -212,30 +213,39 @@ public static class AppleMusicVolume
         var enumeratorType = Type.GetTypeFromCLSID(new Guid("BCDE0395-E52F-467C-8E3D-C4579291692E"));
         var enumerator = (IMMDeviceEnumerator)Activator.CreateInstance(enumeratorType);
 
-        IMMDevice device;
-        enumerator.GetDefaultAudioEndpoint(0 /* eRender */, 1 /* eMultimedia */, out device);
+        IMMDeviceCollection devices;
+        enumerator.EnumAudioEndpoints(0 /* eRender */, 1 /* DEVICE_STATE_ACTIVE */, out devices);
+        int deviceCount;
+        devices.GetCount(out deviceCount);
 
-        object sessionManagerObj;
-        var iidSessionManager2 = typeof(IAudioSessionManager2).GUID;
-        device.Activate(ref iidSessionManager2, 0x17 /* CLSCTX_ALL */, IntPtr.Zero, out sessionManagerObj);
-        var sessionManager = (IAudioSessionManager2)sessionManagerObj;
-
-        IAudioSessionEnumerator sessionEnumerator;
-        sessionManager.GetSessionEnumerator(out sessionEnumerator);
-        int count;
-        sessionEnumerator.GetCount(out count);
-
-        for (int i = 0; i < count; i++)
+        for (int d = 0; d < deviceCount; d++)
         {
-            IAudioSessionControl control;
-            sessionEnumerator.GetSession(i, out control);
-            var control2 = control as IAudioSessionControl2;
-            if (control2 == null) continue;
-            int pid;
-            control2.GetProcessId(out pid);
-            if (!pids.Contains(pid)) continue;
-            var vol = control as ISimpleAudioVolume;
-            if (vol != null) result.Add(vol);
+            IMMDevice device;
+            devices.Item(d, out device);
+
+            object sessionManagerObj;
+            var iidSessionManager2 = typeof(IAudioSessionManager2).GUID;
+            device.Activate(ref iidSessionManager2, 0x17 /* CLSCTX_ALL */, IntPtr.Zero, out sessionManagerObj);
+            var sessionManager = sessionManagerObj as IAudioSessionManager2;
+            if (sessionManager == null) continue;
+
+            IAudioSessionEnumerator sessionEnumerator;
+            sessionManager.GetSessionEnumerator(out sessionEnumerator);
+            int count;
+            sessionEnumerator.GetCount(out count);
+
+            for (int i = 0; i < count; i++)
+            {
+                IAudioSessionControl control;
+                sessionEnumerator.GetSession(i, out control);
+                var control2 = control as IAudioSessionControl2;
+                if (control2 == null) continue;
+                int pid;
+                control2.GetProcessId(out pid);
+                if (!pids.Contains(pid)) continue;
+                var vol = control as ISimpleAudioVolume;
+                if (vol != null) result.Add(vol);
+            }
         }
         return result;
     }
@@ -289,11 +299,18 @@ public static class AppleMusicVolume
 [ComImport, Guid("A95664D2-9614-4F35-A746-DE8DB63617E6"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface IMMDeviceEnumerator
 {
-    int EnumAudioEndpoints(int dataFlow, int stateMask, out IntPtr devices);
+    int EnumAudioEndpoints(int dataFlow, int stateMask, [MarshalAs(UnmanagedType.Interface)] out IMMDeviceCollection devices);
     int GetDefaultAudioEndpoint(int dataFlow, int role, [MarshalAs(UnmanagedType.Interface)] out IMMDevice device);
     int GetDevice([MarshalAs(UnmanagedType.LPWStr)] string id, [MarshalAs(UnmanagedType.Interface)] out IMMDevice device);
     int RegisterEndpointNotificationCallback(IntPtr client);
     int UnregisterEndpointNotificationCallback(IntPtr client);
+}
+
+[ComImport, Guid("0BD7A1BE-7A1A-44DB-8397-CC5392387B5E"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+internal interface IMMDeviceCollection
+{
+    int GetCount(out int count);
+    int Item(int index, [MarshalAs(UnmanagedType.Interface)] out IMMDevice device);
 }
 
 [ComImport, Guid("D666063F-1587-4E43-81F1-B948E807363F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
