@@ -13,18 +13,26 @@ type NowPlayingSettings = {
 	filter?: string;
 };
 
+type FieldState = {
+	text: string;
+	pos: number;
+	hold: number;
+};
+
 type DialState = {
-	title: string;
-	artist: string;
-	scrollPos: number;
-	holdTicks: number;
+	title: FieldState;
+	artist: FieldState;
+	paused: boolean;
 };
 
 const DEFAULT_FILTER = "Apple";
 const SCROLL_INTERVAL_MS = 400;
-const SCROLL_WINDOW = 13;
-const SCROLL_SEPARATOR = " — ";
 const SCROLL_HOLD_TICKS = 5; // pause a chaque retour a 0 (5 * 400ms = 2s)
+
+const TITLE_WINDOW = 13;
+const TITLE_SEPARATOR = " — "; // tiret cadratin pour bien marquer la boucle du titre
+const ARTIST_WINDOW = 16;
+const ARTIST_SEPARATOR = " ";
 
 /**
  * Le champ "Artist" expose par Apple Music via SMTC contient parfois
@@ -34,6 +42,50 @@ const SCROLL_HOLD_TICKS = 5; // pause a chaque retour a 0 (5 * 400ms = 2s)
 function cleanArtist(raw: string | undefined): string {
 	if (!raw) return "";
 	return raw.split(/\s+—\s+/)[0].trim();
+}
+
+/** "Artiste1, Artiste2, Artiste3" -> "Artiste1 feat. Artiste2, Artiste3" */
+function formatArtists(raw: string): string {
+	const parts = raw
+		.split(",")
+		.map((p) => p.trim())
+		.filter(Boolean);
+	if (parts.length <= 1) {
+		return raw;
+	}
+	return `${parts[0]} feat. ${parts.slice(1).join(", ")}`;
+}
+
+function makeFieldState(text: string): FieldState {
+	return { text, pos: 0, hold: SCROLL_HOLD_TICKS };
+}
+
+/** Defilement circulaire : le texte boucle sur lui-meme (separe par `separator`) jusqu'a revenir exactement au debut. */
+function scrollText(text: string, pos: number, window: number, separator: string): string {
+	if (text.length <= window) {
+		return text;
+	}
+	const cycle = text + separator;
+	const looped = cycle + cycle;
+	return looped.slice(pos, pos + window);
+}
+
+/** Avance un FieldState d'un cran ; renvoie true si le texte affiche a change. */
+function tickField(state: FieldState, window: number, separator: string): boolean {
+	if (state.text.length <= window) {
+		return false;
+	}
+	if (state.hold > 0) {
+		state.hold -= 1;
+		return false;
+	}
+	const cycleLen = state.text.length + separator.length;
+	state.pos += 1;
+	if (state.pos >= cycleLen) {
+		state.pos = 0;
+		state.hold = SCROLL_HOLD_TICKS;
+	}
+	return true;
 }
 
 @action({ UUID: "com.alexismartin.applemusic-nowplaying.nowplaying" })
@@ -86,26 +138,32 @@ export class NowPlayingAction extends SingletonAction<NowPlayingSettings> {
 			}
 
 			const title = data.title?.trim() || "?";
-			const artist = cleanArtist(data.artist);
+			const artist = formatArtists(cleanArtist(data.artist));
 			const paused = data.status === "Paused";
 			const progress =
 				data.durationMs && data.durationMs > 0
 					? Math.min(100, Math.max(0, ((data.positionMs ?? 0) / data.durationMs) * 100))
 					: 0;
 			const previous = this.dialState.get(visibleAction.id);
-			const trackChanged = !previous || previous.title !== title || previous.artist !== artist;
+			const trackChanged = !previous || previous.title.text !== title || previous.artist.text !== artist;
 
 			if (trackChanged) {
-				this.dialState.set(visibleAction.id, { title, artist, scrollPos: 0, holdTicks: SCROLL_HOLD_TICKS });
+				this.dialState.set(visibleAction.id, {
+					title: makeFieldState(title),
+					artist: makeFieldState(artist),
+					paused
+				});
+			} else {
+				previous!.paused = paused;
 			}
 			// Ne PAS repartir a la position 0 ici : le scroll est deja gere par
 			// tickScroll() toutes les 400ms. Rappeler scrollText(title, 0) a
 			// chaque poll (1.5s) l'ecrasait et faisait "sauter" le texte au debut.
-			const scrollPos = this.dialState.get(visibleAction.id)!.scrollPos;
+			const state = this.dialState.get(visibleAction.id)!;
 
 			await visibleAction.setFeedback({
-				title: this.scrollText(title, scrollPos),
-				artist: artist || "Apple Music",
+				title: scrollText(state.title.text, state.title.pos, TITLE_WINDOW, TITLE_SEPARATOR),
+				artist: scrollText(state.artist.text, state.artist.pos, ARTIST_WINDOW, ARTIST_SEPARATOR) || "Apple Music",
 				pauseIcon: { enabled: paused },
 				progress,
 				...(data.thumbnail && data.thumbMime ? { cover: `data:${data.thumbMime};base64,${data.thumbnail}` } : {})
@@ -133,34 +191,22 @@ export class NowPlayingAction extends SingletonAction<NowPlayingSettings> {
 				continue;
 			}
 			const state = this.dialState.get(visibleAction.id);
-			if (!state || state.title.length <= SCROLL_WINDOW) {
+			if (!state || state.paused) {
 				continue;
 			}
 
-			if (state.holdTicks > 0) {
-				state.holdTicks -= 1;
+			const titleChanged = tickField(state.title, TITLE_WINDOW, TITLE_SEPARATOR);
+			const artistChanged = tickField(state.artist, ARTIST_WINDOW, ARTIST_SEPARATOR);
+			if (!titleChanged && !artistChanged) {
 				continue;
 			}
 
-			const cycleLen = state.title.length + SCROLL_SEPARATOR.length;
-			state.scrollPos += 1;
-			if (state.scrollPos >= cycleLen) {
-				state.scrollPos = 0;
-				state.holdTicks = SCROLL_HOLD_TICKS;
-			}
-			await visibleAction.setFeedback({ title: this.scrollText(state.title, state.scrollPos) });
+			await visibleAction.setFeedback({
+				...(titleChanged ? { title: scrollText(state.title.text, state.title.pos, TITLE_WINDOW, TITLE_SEPARATOR) } : {}),
+				...(artistChanged
+					? { artist: scrollText(state.artist.text, state.artist.pos, ARTIST_WINDOW, ARTIST_SEPARATOR) }
+					: {})
+			});
 		}
-	}
-
-	private scrollText(text: string, pos: number): string {
-		if (text.length <= SCROLL_WINDOW) {
-			return text;
-		}
-		// Defilement circulaire : le texte boucle sur lui-meme (separe par un
-		// espace) au lieu d'etre tronque en fin de course, jusqu'a revenir
-		// exactement au debut.
-		const cycle = text + SCROLL_SEPARATOR;
-		const looped = cycle + cycle;
-		return looped.slice(pos, pos + SCROLL_WINDOW);
 	}
 }
