@@ -1,0 +1,41 @@
+{
+  "id": "com.alexismartin.applemusic-nowplaying.layout",
+  "items": [
+    {
+      "key": "cover",
+      "type": "pixmap",
+      "rect": [0, 0, 100, 100],
+      "zOrder": 0
+    },
+    {
+      "key": "pauseIcon",
+      "type": "pixmap",
+      "rect": [0, 0, 100, 100],
+      "value": "imgs/actions/now-playing/pause-overlay",
+      "enabled": false,
+      "zOrder": 2
+    },
+    {
+      "key": "title",
+      "type": "text",
+      "rect": [106, 8, 90, 40],
+      "alignment": "left",
+      "color": "#FFFFFF",
+      "font": { "size": 15, "weight": 600 },
+      "text-overflow": "clip",
+      "value": "",
+      "zOrder": 1
+    },
+    {
+      "key": "artist",
+      "type": "text",
+      "rect": [106, 54, 90, 38],
+      "alignment": "left",
+      "color": "#B0B0B0",
+      "font": { "size": 12 },
+      "text-overflow": "ellipsis",
+      "value": "",
+      "zOrder": 1
+    }
+  ]
+}

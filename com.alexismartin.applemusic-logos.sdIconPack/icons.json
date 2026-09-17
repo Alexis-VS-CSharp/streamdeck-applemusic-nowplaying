@@ -1,0 +1,29 @@
+[
+  {
+    "path": "apple-music-color.png",
+    "name": "apple music color",
+    "tags": [
+      "apple music",
+      "music",
+      "logo"
+    ]
+  },
+  {
+    "path": "apple-music-white.png",
+    "name": "apple music white",
+    "tags": [
+      "apple music",
+      "music",
+      "logo"
+    ]
+  },
+  {
+    "path": "apple-music-black.png",
+    "name": "apple music black",
+    "tags": [
+      "apple music",
+      "music",
+      "logo"
+    ]
+  }
+]

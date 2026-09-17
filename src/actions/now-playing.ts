@@ -1,150 +1,152 @@
 import {
 	action,
-	KeyDownEvent,
+	DialDownEvent,
+	DialRotateEvent,
 	SingletonAction,
-	streamDeck,
+	TouchTapEvent,
 	WillAppearEvent,
 	WillDisappearEvent
 } from "@elgato/streamdeck";
-import { ChildProcessWithoutNullStreams, spawn } from "node:child_process";
-import { createInterface } from "node:readline";
-import * as path from "node:path";
+import { nowPlayingService, NowPlayingPayload } from "../now-playing-service";
 
 type NowPlayingSettings = {
 	filter?: string;
 };
 
-type NowPlayingPayload = {
-	hasSession: boolean;
-	appId?: string;
-	title?: string;
-	artist?: string;
-	album?: string;
-	status?: string;
-	thumbnail?: string | null;
-	thumbMime?: string | null;
-	error?: string;
+type DialState = {
+	title: string;
+	artist: string;
+	scrollPos: number;
+	holdTicks: number;
 };
 
-const SCRIPT_PATH = path.join(__dirname, "..", "resources", "now-playing.ps1");
 const DEFAULT_FILTER = "Apple";
-const POLL_INTERVAL_MS = 1500;
+const SCROLL_INTERVAL_MS = 400;
+const SCROLL_WINDOW = 13;
+const SCROLL_HOLD_TICKS = 5; // pause a chaque retour a 0 (5 * 400ms = 2s)
+
+/**
+ * Le champ "Artist" expose par Apple Music via SMTC contient parfois
+ * "Artiste — Album" ou "Artiste1, Artiste2 — Titre - Single" en plus du nom.
+ * On ne garde que la partie avant le tiret cadratin.
+ */
+function cleanArtist(raw: string | undefined): string {
+	if (!raw) return "";
+	return raw.split(/\s+—\s+/)[0].trim();
+}
 
 @action({ UUID: "com.alexismartin.applemusic-nowplaying.nowplaying" })
 export class NowPlayingAction extends SingletonAction<NowPlayingSettings> {
-	private watcher: ChildProcessWithoutNullStreams | null = null;
-	private watcherFilter = DEFAULT_FILTER;
+	private scrollTimer: NodeJS.Timeout | null = null;
+	private dialState = new Map<string, DialState>();
+	private onUpdate = (data: NowPlayingPayload) => void this.render(data);
 
 	override async onWillAppear(ev: WillAppearEvent<NowPlayingSettings>): Promise<void> {
 		const filter = ev.payload.settings?.filter?.trim() || DEFAULT_FILTER;
-		this.ensureWatcher(filter);
+		if ([...this.actions].length === 1) {
+			nowPlayingService.on("update", this.onUpdate);
+		}
+		nowPlayingService.acquire(filter);
+		this.ensureScrollTimer();
+		void this.render(nowPlayingService.latest);
 	}
 
-	override onWillDisappear(_ev: WillDisappearEvent<NowPlayingSettings>): void {
+	override onWillDisappear(ev: WillDisappearEvent<NowPlayingSettings>): void {
+		this.dialState.delete(ev.action.id);
+		nowPlayingService.release();
 		if ([...this.actions].length === 0) {
-			this.stopWatcher();
+			nowPlayingService.off("update", this.onUpdate);
+			this.stopScrollTimer();
 		}
 	}
 
-	override async onKeyDown(ev: KeyDownEvent<NowPlayingSettings>): Promise<void> {
-		const filter = ev.payload.settings?.filter?.trim() || DEFAULT_FILTER;
-		this.runControl("Toggle", filter);
+	override async onDialDown(): Promise<void> {
+		nowPlayingService.control("Toggle");
 	}
 
-	private ensureWatcher(filter: string): void {
-		if (this.watcher && this.watcherFilter === filter) {
-			return;
-		}
-		this.stopWatcher();
-		this.watcherFilter = filter;
-
-		streamDeck.logger.info(`Starting now-playing watcher (filter="${filter}")`);
-		this.watcher = spawn(
-			"powershell.exe",
-			[
-				"-NoProfile",
-				"-NonInteractive",
-				"-ExecutionPolicy",
-				"Bypass",
-				"-File",
-				SCRIPT_PATH,
-				"-Filter",
-				filter,
-				"-IntervalMs",
-				String(POLL_INTERVAL_MS)
-			],
-			{ windowsHide: true }
-		);
-
-		const rl = createInterface({ input: this.watcher.stdout });
-		rl.on("line", (line) => void this.handleLine(line));
-		this.watcher.stderr.on("data", (chunk: Buffer) => {
-			streamDeck.logger.warn(`now-playing.ps1: ${chunk.toString().trim()}`);
-		});
-		this.watcher.on("exit", (code) => {
-			streamDeck.logger.info(`now-playing.ps1 exited (code=${code})`);
-			this.watcher = null;
-		});
+	override async onTouchTap(): Promise<void> {
+		nowPlayingService.control("Toggle");
 	}
 
-	private stopWatcher(): void {
-		if (this.watcher) {
-			this.watcher.kill();
-			this.watcher = null;
-		}
+	override async onDialRotate(ev: DialRotateEvent<NowPlayingSettings>): Promise<void> {
+		nowPlayingService.control(ev.payload.ticks > 0 ? "Next" : "Previous");
 	}
 
-	private runControl(controlAction: "Toggle" | "Next" | "Previous", filter: string): void {
-		const child = spawn(
-			"powershell.exe",
-			[
-				"-NoProfile",
-				"-NonInteractive",
-				"-ExecutionPolicy",
-				"Bypass",
-				"-File",
-				SCRIPT_PATH,
-				"-Filter",
-				filter,
-				"-Action",
-				controlAction
-			],
-			{ windowsHide: true }
-		);
-		child.on("error", (err) => streamDeck.logger.warn(`control command failed: ${err.message}`));
-	}
-
-	private async handleLine(line: string): Promise<void> {
-		const trimmed = line.trim();
-		if (!trimmed) {
-			return;
-		}
-
-		let data: NowPlayingPayload;
-		try {
-			data = JSON.parse(trimmed);
-		} catch {
-			return;
-		}
-
+	private async render(data: NowPlayingPayload): Promise<void> {
 		for (const visibleAction of this.actions) {
+			if (!visibleAction.isDial()) {
+				continue;
+			}
+
 			if (!data.hasSession) {
-				await visibleAction.setTitle("Apple Music");
-				await visibleAction.setImage();
+				this.dialState.delete(visibleAction.id);
+				await visibleAction.setFeedback({ title: "Apple Music", artist: "—", pauseIcon: { enabled: false } });
 				continue;
 			}
 
 			const title = data.title?.trim() || "?";
-			const artist = data.artist?.trim() || "";
+			const artist = cleanArtist(data.artist);
 			const paused = data.status === "Paused";
-			const label = paused ? `${artist}\n${title}\n(pause)` : `${artist}\n${title}`;
+			const previous = this.dialState.get(visibleAction.id);
+			const trackChanged = !previous || previous.title !== title || previous.artist !== artist;
 
-			await visibleAction.setTitle(label);
-			if (data.thumbnail && data.thumbMime) {
-				await visibleAction.setImage(`data:${data.thumbMime};base64,${data.thumbnail}`);
-			} else {
-				await visibleAction.setImage();
+			if (trackChanged) {
+				this.dialState.set(visibleAction.id, { title, artist, scrollPos: 0, holdTicks: SCROLL_HOLD_TICKS });
 			}
+			// Ne PAS repartir a la position 0 ici : le scroll est deja gere par
+			// tickScroll() toutes les 400ms. Rappeler scrollText(title, 0) a
+			// chaque poll (1.5s) l'ecrasait et faisait "sauter" le texte au debut.
+			const scrollPos = this.dialState.get(visibleAction.id)!.scrollPos;
+
+			await visibleAction.setFeedback({
+				title: this.scrollText(title, scrollPos),
+				artist: artist || "Apple Music",
+				pauseIcon: { enabled: paused },
+				...(data.thumbnail && data.thumbMime ? { cover: `data:${data.thumbMime};base64,${data.thumbnail}` } : {})
+			});
 		}
+	}
+
+	private ensureScrollTimer(): void {
+		if (this.scrollTimer) {
+			return;
+		}
+		this.scrollTimer = setInterval(() => void this.tickScroll(), SCROLL_INTERVAL_MS);
+	}
+
+	private stopScrollTimer(): void {
+		if (this.scrollTimer) {
+			clearInterval(this.scrollTimer);
+			this.scrollTimer = null;
+		}
+	}
+
+	private async tickScroll(): Promise<void> {
+		for (const visibleAction of this.actions) {
+			if (!visibleAction.isDial()) {
+				continue;
+			}
+			const state = this.dialState.get(visibleAction.id);
+			if (!state || state.title.length <= SCROLL_WINDOW) {
+				continue;
+			}
+
+			if (state.holdTicks > 0) {
+				state.holdTicks -= 1;
+				continue;
+			}
+
+			const maxPos = state.title.length - SCROLL_WINDOW;
+			state.scrollPos += 1;
+			if (state.scrollPos > maxPos) {
+				state.scrollPos = 0;
+				state.holdTicks = SCROLL_HOLD_TICKS;
+			}
+			await visibleAction.setFeedback({ title: this.scrollText(state.title, state.scrollPos) });
+		}
+	}
+
+	private scrollText(text: string, pos: number): string {
+		return text.length <= SCROLL_WINDOW ? text : text.slice(pos, pos + SCROLL_WINDOW);
 	}
 }

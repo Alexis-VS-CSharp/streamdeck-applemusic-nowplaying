@@ -1,5 +1,7 @@
-// Genere de petites icones PNG (placeholder) sans dependance externe,
-// pour satisfaire le validateur Stream Deck qui exige des fichiers .png.
+// Genere en PNG (sans dependance externe) les icones des boutons de
+// controle et l'overlay pause. Le logo Apple Music (plugin + action list +
+// aperçu du dial) vient uniquement de make-apple-music-icons.mjs — ce
+// script ne doit plus jamais toucher a ces fichiers.
 import { deflateSync } from "node:zlib";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
@@ -64,7 +66,6 @@ function makeCanvas(size) {
 		set(x, y, r, g, b, a) {
 			if (x < 0 || y < 0 || x >= size || y >= size) return;
 			const i = (y * size + x) * 4;
-			// alpha-blend over existing pixel
 			const srcA = a / 255;
 			const dstA = rgba[i + 3] / 255;
 			const outA = srcA + dstA * (1 - srcA);
@@ -84,11 +85,8 @@ function makeCanvas(size) {
 					const dx = x + 0.5 - cx;
 					const dy = y + 0.5 - cy;
 					const d = Math.sqrt(dx * dx + dy * dy) - r;
-					if (d <= 0) {
-						this.set(x, y, cr, cg, cb, ca);
-					} else if (d < 1) {
-						this.set(x, y, cr, cg, cb, ca * (1 - d));
-					}
+					if (d <= 0) this.set(x, y, cr, cg, cb, ca);
+					else if (d < 1) this.set(x, y, cr, cg, cb, ca * (1 - d));
 				}
 			}
 		},
@@ -109,18 +107,26 @@ function makeCanvas(size) {
 				}
 			}
 		},
-		fillRotatedRect(cx, cy, w, h, angleRad, color) {
-			const cos = Math.cos(angleRad);
-			const sin = Math.sin(angleRad);
-			const half = Math.max(w, h) * 0.75;
-			for (let y = Math.floor(cy - half); y <= Math.ceil(cy + half); y++) {
-				for (let x = Math.floor(cx - half); x <= Math.ceil(cx + half); x++) {
-					const dx = x + 0.5 - cx;
-					const dy = y + 0.5 - cy;
-					const lx = dx * cos + dy * sin;
-					const ly = -dx * sin + dy * cos;
-					if (Math.abs(lx) <= w / 2 && Math.abs(ly) <= h / 2) {
-						this.set(x, y, ...color);
+		// points: [[x,y], ...] en coordonnees normalisees [0,1] x [0,1]
+		fillPolygon(points, [cr, cg, cb, ca]) {
+			const pts = points.map(([x, y]) => [x * this.size, y * this.size]);
+			const ys = pts.map((p) => p[1]);
+			const minY = Math.max(0, Math.floor(Math.min(...ys)));
+			const maxY = Math.min(this.size - 1, Math.ceil(Math.max(...ys)));
+			for (let y = minY; y <= maxY; y++) {
+				const yc = y + 0.5;
+				const xs = [];
+				for (let i = 0; i < pts.length; i++) {
+					const [x1, y1] = pts[i];
+					const [x2, y2] = pts[(i + 1) % pts.length];
+					if (y1 === y2) continue;
+					if (yc < Math.min(y1, y2) || yc >= Math.max(y1, y2)) continue;
+					xs.push(x1 + ((yc - y1) / (y2 - y1)) * (x2 - x1));
+				}
+				xs.sort((a, b) => a - b);
+				for (let i = 0; i + 1 < xs.length; i += 2) {
+					for (let x = Math.round(xs[i]); x < Math.round(xs[i + 1]); x++) {
+						this.set(x, y, cr, cg, cb, ca);
 					}
 				}
 			}
@@ -130,39 +136,162 @@ function makeCanvas(size) {
 
 const RED = [250, 35, 59, 255];
 const WHITE = [255, 255, 255, 255];
-const DARK = [30, 30, 30, 255];
 
-function drawNote(canvas, cx, cy, scale) {
-	const headR = 5.4 * scale;
-	const dx = 7.2 * scale;
-	const dy = 5.6 * scale;
-	const x1 = cx - dx;
-	const y1 = cy + dy * 0.55;
-	const x2 = cx + dx;
-	const y2 = cy - dy * 0.75;
-
-	const angle = Math.atan2(y2 - y1, x2 - x1);
-	canvas.fillRotatedRect((x1 + x2) / 2, (y1 + y2) / 2 - headR * 0.15, Math.hypot(x2 - x1, y2 - y1) + headR, headR * 0.65, angle, WHITE);
-	canvas.fillCircle(x1, y1, headR, WHITE);
-	canvas.fillCircle(x2, y2, headR, WHITE);
-	canvas.fillCircle(x1, y1, headR * 0.42, RED.map((v, i) => (i === 3 ? 255 : v)));
-	canvas.fillCircle(x2, y2, headR * 0.42, RED.map((v, i) => (i === 3 ? 255 : v)));
-}
-
-function categoryOrActionIcon(size) {
+function withBrandBackground(size, draw) {
 	const c = makeCanvas(size);
-	const r = size * 0.46;
-	c.fillCircle(size / 2, size / 2, r, RED);
-	drawNote(c, size / 2, size / 2, size / 28);
+	c.fillRoundedRect(0, 0, size, size, size * 0.19, RED);
+	draw(c);
 	return c;
 }
 
-function keyIcon(size) {
+function triangle(points) {
+	return points;
+}
+
+function prevIcon(size) {
+	return withBrandBackground(size, (c) => {
+		c.fillRoundedRect(size * 0.16, size * 0.28, size * 0.23, size * 0.72, size * 0.02, WHITE);
+		c.fillPolygon(
+			triangle([
+				[0.46, 0.28],
+				[0.46, 0.72],
+				[0.25, 0.5]
+			]),
+			WHITE
+		);
+		c.fillPolygon(
+			triangle([
+				[0.74, 0.28],
+				[0.74, 0.72],
+				[0.53, 0.5]
+			]),
+			WHITE
+		);
+	});
+}
+
+function nextIcon(size) {
+	return withBrandBackground(size, (c) => {
+		c.fillRoundedRect(size * 0.77, size * 0.28, size * 0.84, size * 0.72, size * 0.02, WHITE);
+		c.fillPolygon(
+			triangle([
+				[0.54, 0.28],
+				[0.54, 0.72],
+				[0.75, 0.5]
+			]),
+			WHITE
+		);
+		c.fillPolygon(
+			triangle([
+				[0.26, 0.28],
+				[0.26, 0.72],
+				[0.47, 0.5]
+			]),
+			WHITE
+		);
+	});
+}
+
+function playIcon(size) {
+	return withBrandBackground(size, (c) => {
+		c.fillPolygon(
+			triangle([
+				[0.36, 0.24],
+				[0.36, 0.76],
+				[0.72, 0.5]
+			]),
+			WHITE
+		);
+	});
+}
+
+function pauseButtonIcon(size) {
+	return withBrandBackground(size, (c) => {
+		c.fillRoundedRect(size * 0.34, size * 0.24, size * 0.45, size * 0.76, size * 0.02, WHITE);
+		c.fillRoundedRect(size * 0.55, size * 0.24, size * 0.66, size * 0.76, size * 0.02, WHITE);
+	});
+}
+
+function volumeUpIcon(size) {
+	return withBrandBackground(size, (c) => {
+		c.fillRoundedRect(size * 0.3, size * 0.46, size * 0.7, size * 0.54, size * 0.02, WHITE);
+		c.fillRoundedRect(size * 0.46, size * 0.3, size * 0.54, size * 0.7, size * 0.02, WHITE);
+	});
+}
+
+function volumeDownIcon(size) {
+	return withBrandBackground(size, (c) => {
+		c.fillRoundedRect(size * 0.3, size * 0.46, size * 0.7, size * 0.54, size * 0.02, WHITE);
+	});
+}
+
+function drawSpeaker(c) {
+	c.fillPolygon(
+		triangle([
+			[0.2, 0.42],
+			[0.32, 0.42],
+			[0.48, 0.28],
+			[0.48, 0.72],
+			[0.32, 0.58],
+			[0.2, 0.58]
+		]),
+		WHITE
+	);
+}
+
+function muteIcon(size) {
+	return withBrandBackground(size, (c) => {
+		drawSpeaker(c);
+		// barre diagonale (mute)
+		c.fillPolygon(
+			triangle([
+				[0.775, 0.275],
+				[0.725, 0.225],
+				[0.225, 0.725],
+				[0.275, 0.775]
+			]),
+			WHITE
+		);
+	});
+}
+
+function unmuteIcon(size) {
+	return withBrandBackground(size, (c) => {
+		drawSpeaker(c);
+		// deux petits arcs "son" (approximes par de fins quadrilateres courbes)
+		c.fillPolygon(
+			triangle([
+				[0.56, 0.36],
+				[0.6, 0.36],
+				[0.66, 0.5],
+				[0.6, 0.64],
+				[0.56, 0.64],
+				[0.62, 0.5]
+			]),
+			WHITE
+		);
+		c.fillPolygon(
+			triangle([
+				[0.68, 0.26],
+				[0.72, 0.26],
+				[0.8, 0.5],
+				[0.72, 0.74],
+				[0.68, 0.74],
+				[0.76, 0.5]
+			]),
+			WHITE
+		);
+	});
+}
+
+function pauseOverlay(size) {
 	const c = makeCanvas(size);
-	c.fillRoundedRect(0, 0, size, size, size * 0.19, DARK);
-	const r = size * 0.235;
-	c.fillCircle(size / 2, size * 0.42, r, RED);
-	drawNote(c, size / 2, size * 0.42, size / 72);
+	c.fillCircle(size / 2, size / 2, size * 0.42, [0, 0, 0, 170]);
+	const barW = size * 0.09;
+	const barH = size * 0.32;
+	const gap = size * 0.08;
+	c.fillRoundedRect(size / 2 - gap / 2 - barW, size / 2 - barH / 2, size / 2 - gap / 2, size / 2 + barH / 2, barW * 0.25, WHITE);
+	c.fillRoundedRect(size / 2 + gap / 2, size / 2 - barH / 2, size / 2 + gap / 2 + barW, size / 2 + barH / 2, barW * 0.25, WHITE);
 	return c;
 }
 
@@ -173,10 +302,20 @@ function save(path, canvas) {
 }
 
 const base = "com.alexismartin.applemusic-nowplaying.sdPlugin";
+const control = `${base}/imgs/actions/control`;
 
-save(`${base}/imgs/plugin/category-icon.png`, categoryOrActionIcon(28));
-save(`${base}/imgs/plugin/category-icon@2x.png`, categoryOrActionIcon(56));
-save(`${base}/imgs/actions/now-playing/icon.png`, categoryOrActionIcon(20));
-save(`${base}/imgs/actions/now-playing/icon@2x.png`, categoryOrActionIcon(40));
-save(`${base}/imgs/actions/now-playing/key.png`, keyIcon(72));
-save(`${base}/imgs/actions/now-playing/key@2x.png`, keyIcon(144));
+save(`${base}/imgs/actions/now-playing/pause-overlay.png`, pauseOverlay(100));
+
+for (const [name, fn] of Object.entries({
+	prev: prevIcon,
+	next: nextIcon,
+	play: playIcon,
+	pause: pauseButtonIcon,
+	"volume-up": volumeUpIcon,
+	"volume-down": volumeDownIcon,
+	mute: muteIcon,
+	unmute: unmuteIcon
+})) {
+	save(`${control}/${name}.png`, fn(72));
+	save(`${control}/${name}@2x.png`, fn(144));
+}
