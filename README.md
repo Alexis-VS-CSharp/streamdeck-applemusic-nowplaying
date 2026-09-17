@@ -80,3 +80,7 @@ npm run pack
 
 - Shuffle et Repeat ne sont pas pilotables : Apple Music for Windows ne déclare pas ces commandes via SMTC (limitation de l'app elle-même, pas du plugin).
 - Si le son passe par un logiciel de routage/mixage tiers (ex: SteelSeries Sonar) qui remixe l'audio en interne après Windows, le contrôle de volume agit sur la session Windows (la couche "source"), pas sur un éventuel fader interne à ce logiciel.
+
+## Licence
+
+[MIT](LICENSE) — à l'exception des icônes Apple Music elles-mêmes (`imgs/`), qui restent la propriété d'Apple Inc. et sont utilisées uniquement à des fins d'identification.

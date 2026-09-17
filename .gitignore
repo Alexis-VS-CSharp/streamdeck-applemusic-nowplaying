@@ -2,3 +2,11 @@ node_modules/
 com.alexismartin.applemusic-nowplaying.sdPlugin/bin/
 com.alexismartin.applemusic-nowplaying.sdPlugin/logs/
 logs/
+
+# Kit officiel Apple (guidelines de marque, .ai/.eps) : usage local uniquement
+# pour regenerer les icones, pas redistribuable publiquement.
+am-icon-pack/
+
+# Config/hooks Claude Code locaux (chemins machine-specifiques).
+.claude/settings.json
+.claude/settings.local.json

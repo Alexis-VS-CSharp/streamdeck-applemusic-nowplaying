@@ -2,6 +2,7 @@
   "name": "applemusic-nowplaying",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "description": "Stream Deck plugin: affiche la lecture en cours d'Apple Music (Windows) sur une touche.",
   "scripts": {
     "build": "rollup -c",
