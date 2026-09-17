@@ -197,10 +197,15 @@ public static class NowPlayingBridge
 
 public static class AppleMusicVolume
 {
-    private static ISimpleAudioVolume FindSessionVolume()
+    // Apple Music (UWP) ouvre plusieurs sessions audio pour un seul process
+    // (ex: une tranche "reelle" et une tranche silencieuse/inactive) : il faut
+    // agir sur toutes celles du process, sinon on risque de piloter celle qui
+    // ne produit aucun son pendant que l'autre reste audible.
+    private static List<ISimpleAudioVolume> FindSessionVolumes()
     {
+        var result = new List<ISimpleAudioVolume>();
         var procs = System.Diagnostics.Process.GetProcessesByName("AppleMusic");
-        if (procs.Length == 0) return null;
+        if (procs.Length == 0) return result;
         var pids = new HashSet<int>();
         foreach (var p in procs) pids.Add(p.Id);
 
@@ -229,22 +234,25 @@ public static class AppleMusicVolume
             int pid;
             control2.GetProcessId(out pid);
             if (!pids.Contains(pid)) continue;
-            return control as ISimpleAudioVolume;
+            var vol = control as ISimpleAudioVolume;
+            if (vol != null) result.Add(vol);
         }
-        return null;
+        return result;
     }
 
     public static void Adjust(float delta)
     {
         try
         {
-            var vol = FindSessionVolume();
-            if (vol == null) return;
-            float current;
-            vol.GetMasterVolume(out current);
-            var next = Math.Max(0f, Math.Min(1f, current + delta));
-            var eventContext = Guid.Empty;
-            vol.SetMasterVolume(next, ref eventContext);
+            var vols = FindSessionVolumes();
+            foreach (var vol in vols)
+            {
+                float current;
+                vol.GetMasterVolume(out current);
+                var next = Math.Max(0f, Math.Min(1f, current + delta));
+                var eventContext = Guid.Empty;
+                vol.SetMasterVolume(next, ref eventContext);
+            }
         }
         catch { }
     }
@@ -254,13 +262,21 @@ public static class AppleMusicVolume
     {
         try
         {
-            var vol = FindSessionVolume();
-            if (vol == null) return null;
-            bool muted;
-            vol.GetMute(out muted);
-            var next = !muted;
+            var vols = FindSessionVolumes();
+            if (vols.Count == 0) return null;
+
+            // Si au moins une session est encore audible, on mute tout.
+            // Sinon (tout est deja muet), on demute tout.
+            bool anyUnmuted = false;
+            foreach (var v in vols)
+            {
+                bool m;
+                v.GetMute(out m);
+                if (!m) { anyUnmuted = true; break; }
+            }
+            var next = anyUnmuted;
             var eventContext = Guid.Empty;
-            vol.SetMute(next, ref eventContext);
+            foreach (var v in vols) v.SetMute(next, ref eventContext);
             return next;
         }
         catch

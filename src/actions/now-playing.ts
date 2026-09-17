@@ -23,6 +23,7 @@ type DialState = {
 const DEFAULT_FILTER = "Apple";
 const SCROLL_INTERVAL_MS = 400;
 const SCROLL_WINDOW = 13;
+const SCROLL_SEPARATOR = " — ";
 const SCROLL_HOLD_TICKS = 5; // pause a chaque retour a 0 (5 * 400ms = 2s)
 
 /**
@@ -141,9 +142,9 @@ export class NowPlayingAction extends SingletonAction<NowPlayingSettings> {
 				continue;
 			}
 
-			const maxPos = state.title.length - SCROLL_WINDOW;
+			const cycleLen = state.title.length + SCROLL_SEPARATOR.length;
 			state.scrollPos += 1;
-			if (state.scrollPos > maxPos) {
+			if (state.scrollPos >= cycleLen) {
 				state.scrollPos = 0;
 				state.holdTicks = SCROLL_HOLD_TICKS;
 			}
@@ -152,6 +153,14 @@ export class NowPlayingAction extends SingletonAction<NowPlayingSettings> {
 	}
 
 	private scrollText(text: string, pos: number): string {
-		return text.length <= SCROLL_WINDOW ? text : text.slice(pos, pos + SCROLL_WINDOW);
+		if (text.length <= SCROLL_WINDOW) {
+			return text;
+		}
+		// Defilement circulaire : le texte boucle sur lui-meme (separe par un
+		// espace) au lieu d'etre tronque en fin de course, jusqu'a revenir
+		// exactement au debut.
+		const cycle = text + SCROLL_SEPARATOR;
+		const looped = cycle + cycle;
+		return looped.slice(pos, pos + SCROLL_WINDOW);
 	}
 }
