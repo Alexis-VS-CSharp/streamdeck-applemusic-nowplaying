@@ -28,6 +28,7 @@ type DialState = {
 const DEFAULT_FILTER = "Apple";
 const SCROLL_INTERVAL_MS = 400;
 const SCROLL_HOLD_TICKS = 5; // pause a chaque retour a 0 (5 * 400ms = 2s)
+const CLICK_WINDOW_MS = 350; // 1 clic = pause/lecture, 2 = suivant, 3+ = precedent
 
 const TITLE_WINDOW = 13;
 const TITLE_SEPARATOR = " — "; // tiret cadratin pour bien marquer la boucle du titre
@@ -92,6 +93,7 @@ function tickField(state: FieldState, window: number, separator: string): boolea
 export class NowPlayingAction extends SingletonAction<NowPlayingSettings> {
 	private scrollTimer: NodeJS.Timeout | null = null;
 	private dialState = new Map<string, DialState>();
+	private clickState = new Map<string, { count: number; timer: NodeJS.Timeout }>();
 	private onUpdate = (data: NowPlayingPayload) => void this.render(data);
 
 	override async onWillAppear(ev: WillAppearEvent<NowPlayingSettings>): Promise<void> {
@@ -106,6 +108,11 @@ export class NowPlayingAction extends SingletonAction<NowPlayingSettings> {
 
 	override onWillDisappear(ev: WillDisappearEvent<NowPlayingSettings>): void {
 		this.dialState.delete(ev.action.id);
+		const pendingClick = this.clickState.get(ev.action.id);
+		if (pendingClick) {
+			clearTimeout(pendingClick.timer);
+			this.clickState.delete(ev.action.id);
+		}
 		nowPlayingService.release();
 		if ([...this.actions].length === 0) {
 			nowPlayingService.off("update", this.onUpdate);
@@ -113,8 +120,25 @@ export class NowPlayingAction extends SingletonAction<NowPlayingSettings> {
 		}
 	}
 
-	override async onDialDown(): Promise<void> {
-		nowPlayingService.control("Toggle");
+	override async onDialDown(ev: DialDownEvent<NowPlayingSettings>): Promise<void> {
+		const id = ev.action.id;
+		const pending = this.clickState.get(id);
+		if (pending) {
+			clearTimeout(pending.timer);
+			pending.count += 1;
+		}
+		const state = pending ?? { count: 1, timer: null as unknown as NodeJS.Timeout };
+		this.clickState.set(id, state);
+		state.timer = setTimeout(() => {
+			this.clickState.delete(id);
+			if (state.count === 1) {
+				nowPlayingService.control("Toggle");
+			} else if (state.count === 2) {
+				nowPlayingService.control("Next");
+			} else {
+				nowPlayingService.control("Previous");
+			}
+		}, CLICK_WINDOW_MS);
 	}
 
 	override async onTouchTap(): Promise<void> {
