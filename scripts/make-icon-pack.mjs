@@ -7,7 +7,9 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 
 const packDir = "com.alexismartin.applemusic-logos.sdIconPack";
 const iconsDir = `${packDir}/icons`;
+const previewsDir = `${packDir}/previews`;
 mkdirSync(iconsDir, { recursive: true });
+mkdirSync(previewsDir, { recursive: true });
 
 const svgBase = "am-icon-pack/Apple Music_Icon_2020";
 const sources = {
@@ -26,6 +28,10 @@ for (const [id, svgPath] of Object.entries(sources)) {
 }
 
 writeFileSync(`${packDir}/icon.png`, readFileSync(`${iconsDir}/apple-music-color.png`));
+// Tous les icon packs installes par defaut ont un dossier previews/ : sans
+// lui, Stream Deck semble filtrer silencieusement le pack de son navigateur
+// d'icones (aucune erreur, juste invisible).
+writeFileSync(`${previewsDir}/preview_1.png`, readFileSync(`${iconsDir}/apple-music-color.png`));
 
 writeFileSync(`${packDir}/icons.json`, JSON.stringify(icons, null, 2));
 

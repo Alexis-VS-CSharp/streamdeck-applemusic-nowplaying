@@ -68,7 +68,7 @@ Le binaire compilé est copié automatiquement dans `com.alexismartin.applemusic
 cp -r com.alexismartin.applemusic-logos.sdIconPack "$APPDATA/Elgato/StreamDeck/IconPacks/"
 ```
 
-Puis redémarrer l'app Stream Deck.
+Puis redémarrer l'app Stream Deck. Pour l'utiliser : clic sur l'icône d'un bouton/dossier/profil dans le panneau de droite → l'éditeur d'icône s'ouvre → onglet **Icons** → chercher "Apple Music" (le pack apparaît aussi en parcourant la liste des packs installés).
 
 ## Comment ça marche
 
