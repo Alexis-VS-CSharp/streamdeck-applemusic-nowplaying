@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -32,6 +33,9 @@ public static class NowPlayingBridge
 
             var props = Await(session.TryGetMediaPropertiesAsync());
             var playback = session.GetPlaybackInfo();
+            var timeline = session.GetTimelineProperties();
+            long positionMs = (long)timeline.Position.TotalMilliseconds;
+            long durationMs = (long)(timeline.EndTime - timeline.StartTime).TotalMilliseconds;
 
             string thumbB64 = null, thumbMime = null;
             if (props.Thumbnail != null)
@@ -67,7 +71,9 @@ public static class NowPlayingBridge
             AppendJsonString(sb, "album", props.AlbumTitle); sb.Append(',');
             AppendJsonString(sb, "status", playback.PlaybackStatus.ToString()); sb.Append(',');
             AppendJsonString(sb, "thumbnail", thumbB64); sb.Append(',');
-            AppendJsonString(sb, "thumbMime", thumbMime);
+            AppendJsonString(sb, "thumbMime", thumbMime); sb.Append(',');
+            sb.Append("\"positionMs\":").Append(positionMs).Append(',');
+            sb.Append("\"durationMs\":").Append(durationMs);
             sb.Append('}');
             return sb.ToString();
         }
@@ -184,74 +190,63 @@ public static class NowPlayingBridge
     }
 }
 
-// --- Volume interne d'Apple Music, via le curseur de sa propre interface ---
-// Apple Music n'expose ni API ni commande SMTC pour son volume : on pilote
-// directement le slider de son flyout "Volume" avec UI Automation, comme le
-// ferait un utilisateur (clic pour ouvrir le flyout, puis lecture/ecriture
-// du RangeValuePattern).
+// --- Volume d'Apple Music via le mixeur de volume Windows (Core Audio) ---
+// On pilote le volume/mute de la session audio du process AppleMusic via
+// ISimpleAudioVolume (meme controle que la tranche de l'app dans le mixeur
+// de volume Windows), plutot que le curseur interne de l'app.
 
 public static class AppleMusicVolume
 {
-    [DllImport("user32.dll")] private static extern bool SetCursorPos(int x, int y);
-    [DllImport("user32.dll")] private static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, UIntPtr dwExtraInfo);
-    private const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
-    private const uint MOUSEEVENTF_LEFTUP = 0x0004;
-
-    private static System.Windows.Automation.AutomationElement FindSlider(System.Windows.Automation.AutomationElement window)
-    {
-        return window.FindFirst(
-            System.Windows.Automation.TreeScope.Descendants,
-            new System.Windows.Automation.PropertyCondition(System.Windows.Automation.AutomationElement.AutomationIdProperty, "VolumeSlider"));
-    }
-
-    // Le bouton Volume est un toggle : cliquer alors que le flyout est deja
-    // ouvert le REFERME (et corrompt la lecture qui suit). On ne clique donc
-    // que si le slider n'est pas deja trouvable.
-    private static System.Windows.Automation.AutomationElement OpenVolumeSlider()
+    private static ISimpleAudioVolume FindSessionVolume()
     {
         var procs = System.Diagnostics.Process.GetProcessesByName("AppleMusic");
-        if (procs.Length == 0 || procs[0].MainWindowHandle == IntPtr.Zero) return null;
+        if (procs.Length == 0) return null;
+        var pids = new HashSet<int>();
+        foreach (var p in procs) pids.Add(p.Id);
 
-        var window = System.Windows.Automation.AutomationElement.FromHandle(procs[0].MainWindowHandle);
+        var enumeratorType = Type.GetTypeFromCLSID(new Guid("BCDE0395-E52F-467C-8E3D-C4579291692E"));
+        var enumerator = (IMMDeviceEnumerator)Activator.CreateInstance(enumeratorType);
 
-        var existing = FindSlider(window);
-        if (existing != null) return existing;
+        IMMDevice device;
+        enumerator.GetDefaultAudioEndpoint(0 /* eRender */, 1 /* eMultimedia */, out device);
 
-        var volBtn = window.FindFirst(
-            System.Windows.Automation.TreeScope.Descendants,
-            new System.Windows.Automation.PropertyCondition(System.Windows.Automation.AutomationElement.AutomationIdProperty, "VolumeButton"));
-        if (volBtn == null) return null;
+        object sessionManagerObj;
+        var iidSessionManager2 = typeof(IAudioSessionManager2).GUID;
+        device.Activate(ref iidSessionManager2, 0x17 /* CLSCTX_ALL */, IntPtr.Zero, out sessionManagerObj);
+        var sessionManager = (IAudioSessionManager2)sessionManagerObj;
 
-        var rect = volBtn.Current.BoundingRectangle;
-        var x = (int)(rect.X + rect.Width / 2);
-        var y = (int)(rect.Y + rect.Height / 2);
-        SetCursorPos(x, y);
-        System.Threading.Thread.Sleep(50);
-        mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, UIntPtr.Zero);
-        System.Threading.Thread.Sleep(50);
-        mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, UIntPtr.Zero);
-        System.Threading.Thread.Sleep(350);
+        IAudioSessionEnumerator sessionEnumerator;
+        sessionManager.GetSessionEnumerator(out sessionEnumerator);
+        int count;
+        sessionEnumerator.GetCount(out count);
 
-        return FindSlider(window);
+        for (int i = 0; i < count; i++)
+        {
+            IAudioSessionControl control;
+            sessionEnumerator.GetSession(i, out control);
+            var control2 = control as IAudioSessionControl2;
+            if (control2 == null) continue;
+            int pid;
+            control2.GetProcessId(out pid);
+            if (!pids.Contains(pid)) continue;
+            return control as ISimpleAudioVolume;
+        }
+        return null;
     }
 
     public static void Adjust(float delta)
     {
         try
         {
-            var slider = OpenVolumeSlider();
-            object p;
-            if (slider == null || !slider.TryGetCurrentPattern(System.Windows.Automation.RangeValuePattern.Pattern, out p)) return;
-            var rvp = (System.Windows.Automation.RangeValuePattern)p;
-            var next = Math.Max(0.0, Math.Min(1.0, rvp.Current.Value + delta));
-            rvp.SetValue(next);
+            var vol = FindSessionVolume();
+            if (vol == null) return;
+            float current;
+            vol.GetMasterVolume(out current);
+            var next = Math.Max(0f, Math.Min(1f, current + delta));
+            var eventContext = Guid.Empty;
+            vol.SetMasterVolume(next, ref eventContext);
         }
         catch { }
-    }
-
-    private static string MuteStateFile
-    {
-        get { return System.IO.Path.Combine(System.IO.Path.GetTempPath(), "applemusic-nowplaying-lastvolume.txt"); }
     }
 
     /// <summary>Bascule le mute et renvoie le nouvel etat (true = muet), ou null en cas d'echec.</summary>
@@ -259,38 +254,100 @@ public static class AppleMusicVolume
     {
         try
         {
-            var slider = OpenVolumeSlider();
-            object p;
-            if (slider == null || !slider.TryGetCurrentPattern(System.Windows.Automation.RangeValuePattern.Pattern, out p)) return null;
-            var rvp = (System.Windows.Automation.RangeValuePattern)p;
-            var current = rvp.Current.Value;
-
-            if (current > 0.001)
-            {
-                System.IO.File.WriteAllText(MuteStateFile, current.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                rvp.SetValue(0);
-                return true;
-            }
-            else
-            {
-                double restore = 0.5;
-                if (System.IO.File.Exists(MuteStateFile))
-                {
-                    double.TryParse(
-                        System.IO.File.ReadAllText(MuteStateFile),
-                        System.Globalization.NumberStyles.Any,
-                        System.Globalization.CultureInfo.InvariantCulture,
-                        out restore);
-                }
-                rvp.SetValue(restore);
-                return false;
-            }
+            var vol = FindSessionVolume();
+            if (vol == null) return null;
+            bool muted;
+            vol.GetMute(out muted);
+            var next = !muted;
+            var eventContext = Guid.Empty;
+            vol.SetMute(next, ref eventContext);
+            return next;
         }
         catch
         {
             return null;
         }
     }
+}
+
+[ComImport, Guid("A95664D2-9614-4F35-A746-DE8DB63617E6"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+internal interface IMMDeviceEnumerator
+{
+    int EnumAudioEndpoints(int dataFlow, int stateMask, out IntPtr devices);
+    int GetDefaultAudioEndpoint(int dataFlow, int role, [MarshalAs(UnmanagedType.Interface)] out IMMDevice device);
+    int GetDevice([MarshalAs(UnmanagedType.LPWStr)] string id, [MarshalAs(UnmanagedType.Interface)] out IMMDevice device);
+    int RegisterEndpointNotificationCallback(IntPtr client);
+    int UnregisterEndpointNotificationCallback(IntPtr client);
+}
+
+[ComImport, Guid("D666063F-1587-4E43-81F1-B948E807363F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+internal interface IMMDevice
+{
+    int Activate(ref Guid iid, int clsCtx, IntPtr activationParams, [MarshalAs(UnmanagedType.IUnknown)] out object interfacePointer);
+    int OpenPropertyStore(int stgmAccess, out IntPtr properties);
+    int GetId([MarshalAs(UnmanagedType.LPWStr)] out string id);
+    int GetState(out int state);
+}
+
+[ComImport, Guid("77AA99A0-1BD6-484F-8BC7-2C654C9A9B6F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+internal interface IAudioSessionManager2
+{
+    int GetAudioSessionControl(ref Guid audioSessionGuid, int streamFlags, [MarshalAs(UnmanagedType.Interface)] out object session);
+    int GetSimpleAudioVolume(ref Guid audioSessionGuid, int streamFlags, [MarshalAs(UnmanagedType.Interface)] out object simpleAudioVolume);
+    int GetSessionEnumerator([MarshalAs(UnmanagedType.Interface)] out IAudioSessionEnumerator sessionEnum);
+    int RegisterSessionNotification(IntPtr client);
+    int UnregisterSessionNotification(IntPtr client);
+    int RegisterDuckNotification([MarshalAs(UnmanagedType.LPWStr)] string sessionId, IntPtr client);
+    int UnregisterDuckNotification(IntPtr client);
+}
+
+[ComImport, Guid("E2F5BB11-0570-40CA-ACDD-3AA01277DEE8"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+internal interface IAudioSessionEnumerator
+{
+    int GetCount(out int count);
+    int GetSession(int index, [MarshalAs(UnmanagedType.Interface)] out IAudioSessionControl session);
+}
+
+[ComImport, Guid("F4B1A599-7266-4319-A8CA-E70ACB11E8CD"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+internal interface IAudioSessionControl
+{
+    int GetState(out int state);
+    int GetDisplayName([MarshalAs(UnmanagedType.LPWStr)] out string name);
+    int SetDisplayName([MarshalAs(UnmanagedType.LPWStr)] string name, ref Guid eventContext);
+    int GetIconPath([MarshalAs(UnmanagedType.LPWStr)] out string path);
+    int SetIconPath([MarshalAs(UnmanagedType.LPWStr)] string path, ref Guid eventContext);
+    int GetGroupingParam(out Guid groupingParam);
+    int SetGroupingParam(ref Guid groupingParam, ref Guid eventContext);
+    int RegisterAudioSessionNotification(IntPtr client);
+    int UnregisterAudioSessionNotification(IntPtr client);
+}
+
+[ComImport, Guid("BFB7FF88-7239-4FC9-8FA2-07C950BE9C6D"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+internal interface IAudioSessionControl2
+{
+    int GetState(out int state);
+    int GetDisplayName([MarshalAs(UnmanagedType.LPWStr)] out string name);
+    int SetDisplayName([MarshalAs(UnmanagedType.LPWStr)] string name, ref Guid eventContext);
+    int GetIconPath([MarshalAs(UnmanagedType.LPWStr)] out string path);
+    int SetIconPath([MarshalAs(UnmanagedType.LPWStr)] string path, ref Guid eventContext);
+    int GetGroupingParam(out Guid groupingParam);
+    int SetGroupingParam(ref Guid groupingParam, ref Guid eventContext);
+    int RegisterAudioSessionNotification(IntPtr client);
+    int UnregisterAudioSessionNotification(IntPtr client);
+    int GetSessionIdentifier([MarshalAs(UnmanagedType.LPWStr)] out string id);
+    int GetSessionInstanceIdentifier([MarshalAs(UnmanagedType.LPWStr)] out string id);
+    int GetProcessId(out int pid);
+    int IsSystemSoundsSession();
+    int SetDuckingPreference(bool optOut);
+}
+
+[ComImport, Guid("87CE5498-68D6-44E5-9215-6DA47EF883D8"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+internal interface ISimpleAudioVolume
+{
+    int SetMasterVolume(float level, ref Guid eventContext);
+    int GetMasterVolume(out float level);
+    int SetMute(bool mute, ref Guid eventContext);
+    int GetMute(out bool mute);
 }
 
 public static class EntryPoint

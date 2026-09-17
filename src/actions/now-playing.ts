@@ -80,13 +80,17 @@ export class NowPlayingAction extends SingletonAction<NowPlayingSettings> {
 
 			if (!data.hasSession) {
 				this.dialState.delete(visibleAction.id);
-				await visibleAction.setFeedback({ title: "Apple Music", artist: "—", pauseIcon: { enabled: false } });
+				await visibleAction.setFeedback({ title: "Apple Music", artist: "—", pauseIcon: { enabled: false }, progress: 0 });
 				continue;
 			}
 
 			const title = data.title?.trim() || "?";
 			const artist = cleanArtist(data.artist);
 			const paused = data.status === "Paused";
+			const progress =
+				data.durationMs && data.durationMs > 0
+					? Math.min(100, Math.max(0, ((data.positionMs ?? 0) / data.durationMs) * 100))
+					: 0;
 			const previous = this.dialState.get(visibleAction.id);
 			const trackChanged = !previous || previous.title !== title || previous.artist !== artist;
 
@@ -102,6 +106,7 @@ export class NowPlayingAction extends SingletonAction<NowPlayingSettings> {
 				title: this.scrollText(title, scrollPos),
 				artist: artist || "Apple Music",
 				pauseIcon: { enabled: paused },
+				progress,
 				...(data.thumbnail && data.thumbMime ? { cover: `data:${data.thumbMime};base64,${data.thumbnail}` } : {})
 			});
 		}

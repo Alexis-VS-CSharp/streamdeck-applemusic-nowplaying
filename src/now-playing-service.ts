@@ -13,6 +13,8 @@ export type NowPlayingPayload = {
 	status?: string;
 	thumbnail?: string | null;
 	thumbMime?: string | null;
+	positionMs?: number;
+	durationMs?: number;
 	error?: string;
 };
 
