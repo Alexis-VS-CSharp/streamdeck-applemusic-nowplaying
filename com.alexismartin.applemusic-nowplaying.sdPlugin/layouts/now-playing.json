@@ -29,11 +29,31 @@
     {
       "key": "artist",
       "type": "text",
-      "rect": [106, 54, 90, 30],
+      "rect": [106, 54, 90, 20],
       "alignment": "left",
       "color": "#B0B0B0",
       "font": { "size": 12 },
       "text-overflow": "ellipsis",
+      "value": "",
+      "zOrder": 1
+    },
+    {
+      "key": "elapsed",
+      "type": "text",
+      "rect": [106, 75, 44, 14],
+      "alignment": "left",
+      "color": "#B0B0B0",
+      "font": { "size": 10 },
+      "value": "",
+      "zOrder": 1
+    },
+    {
+      "key": "remaining",
+      "type": "text",
+      "rect": [152, 75, 44, 14],
+      "alignment": "right",
+      "color": "#B0B0B0",
+      "font": { "size": 10 },
       "value": "",
       "zOrder": 1
     },

@@ -57,6 +57,14 @@ function formatArtists(raw: string): string {
 	return `${parts[0]} feat. ${parts.slice(1).join(", ")}`;
 }
 
+function formatTime(ms: number): string {
+	const total = Math.max(0, Math.floor(ms / 1000));
+	const h = Math.floor(total / 3600);
+	const m = Math.floor((total % 3600) / 60);
+	const ss = String(total % 60).padStart(2, "0");
+	return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`;
+}
+
 function makeFieldState(text: string): FieldState {
 	return { text, pos: 0, hold: SCROLL_HOLD_TICKS };
 }
@@ -168,17 +176,18 @@ export class NowPlayingAction extends SingletonAction<NowPlayingSettings> {
 
 			if (!data.hasSession) {
 				this.dialState.delete(visibleAction.id);
-				await visibleAction.setFeedback({ title: "Apple Music", artist: "—", pauseIcon: { enabled: false }, progress: 0 });
+				await visibleAction.setFeedback({ title: "Apple Music", artist: "—", pauseIcon: { enabled: false }, progress: 0, elapsed: "", remaining: "" });
 				continue;
 			}
 
 			const title = data.title?.trim() || "?";
 			const artist = formatArtists(cleanArtist(data.artist));
 			const paused = data.status === "Paused";
-			const progress =
-				data.durationMs && data.durationMs > 0
-					? Math.min(100, Math.max(0, ((data.positionMs ?? 0) / data.durationMs) * 100))
-					: 0;
+			const duration = data.durationMs ?? 0;
+			const position = Math.min(duration, Math.max(0, data.positionMs ?? 0));
+			const progress = duration > 0 ? (position / duration) * 100 : 0;
+			const elapsed = duration > 0 ? formatTime(position) : "";
+			const remaining = duration > 0 ? `-${formatTime(duration - position)}` : "";
 			const previous = this.dialState.get(visibleAction.id);
 			const trackChanged = !previous || previous.title.text !== title || previous.artist.text !== artist;
 
@@ -201,6 +210,8 @@ export class NowPlayingAction extends SingletonAction<NowPlayingSettings> {
 				artist: scrollText(state.artist.text, state.artist.pos, ARTIST_WINDOW, ARTIST_SEPARATOR) || "Apple Music",
 				pauseIcon: { enabled: paused },
 				progress,
+				elapsed,
+				remaining,
 				...(data.thumbnail && data.thumbMime ? { cover: `data:${data.thumbMime};base64,${data.thumbnail}` } : {})
 			});
 		}
