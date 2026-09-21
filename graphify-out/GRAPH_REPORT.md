@@ -6,7 +6,7 @@
 ## Summary
 - 318 nodes · 451 edges · 35 communities (11 shown, 24 thin omitted)
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 22 edges (avg confidence: 0.83)
-- Token cost: 0 input · 953,000 output
+- Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
 - Stream Deck Action Handlers
@@ -73,8 +73,8 @@
 - None detected.
 
 ## Hyperedges (group relationships)
-- **Windows Bridging via NowPlayingBridge.exe (English)** — readme_nowplayingbridge_exe, readme_smtc, readme_core_audio, readme_ui_automation [EXTRACTED 1.00]
 - **Windows Bridging via NowPlayingBridge.exe (French)** — readme_fr_nowplayingbridge_exe, readme_fr_smtc, readme_fr_core_audio, readme_fr_ui_automation [EXTRACTED 1.00]
+- **Windows Bridging via NowPlayingBridge.exe (English)** — readme_nowplayingbridge_exe, readme_smtc, readme_core_audio, readme_ui_automation [EXTRACTED 1.00]
 - **Launch Playlist/Album Playback Flow** — readme_launch_playlist_album, readme_music_protocol, readme_ui_automation [EXTRACTED 1.00]
 
 ## Communities (35 total, 24 thin omitted)
