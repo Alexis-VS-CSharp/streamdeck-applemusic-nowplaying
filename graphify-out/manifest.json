@@ -1,0 +1,272 @@
+{
+  "build-bridge/NowPlayingBridge.cs": {
+    "mtime": 1789675096.549998,
+    "seen": 1790020055.0297348,
+    "ast_hash": "c143cd667c0af058335be67f7e2b3b6f",
+    "semantic_hash": "c143cd667c0af058335be67f7e2b3b6f"
+  },
+  "build-bridge/build.ps1": {
+    "mtime": 1789583400.707932,
+    "seen": 1790020055.0297406,
+    "ast_hash": "37d88247f167382914087c530753a82d",
+    "semantic_hash": "37d88247f167382914087c530753a82d"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/layouts/now-playing.json": {
+    "mtime": 1790018739.224809,
+    "seen": 1790020055.0297437,
+    "ast_hash": "e62eedd8f180c97f71808b6d7ceeb830",
+    "semantic_hash": "e62eedd8f180c97f71808b6d7ceeb830"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/manifest.json": {
+    "mtime": 1789681909.0125446,
+    "seen": 1790020055.0297446,
+    "ast_hash": "41cccdc96345022acce8c075eb553832",
+    "semantic_hash": "41cccdc96345022acce8c075eb553832"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/package.json": {
+    "mtime": 1789578687.635411,
+    "seen": 1790020055.0297453,
+    "ast_hash": "df9ffc6aa3f78a5491736d441c4258a8",
+    "semantic_hash": "df9ffc6aa3f78a5491736d441c4258a8"
+  },
+  "package.json": {
+    "mtime": 1789682155.374071,
+    "seen": 1790020055.0297463,
+    "ast_hash": "2ed4ff00b8b2ebb5a9871670a7c5d7e3",
+    "semantic_hash": "2ed4ff00b8b2ebb5a9871670a7c5d7e3"
+  },
+  "rollup.config.mjs": {
+    "mtime": 1789578410.0165045,
+    "seen": 1790020055.0297472,
+    "ast_hash": "f48baba3295c3aa66d8d17e67d966d02",
+    "semantic_hash": "f48baba3295c3aa66d8d17e67d966d02"
+  },
+  "scripts/make-apple-music-icons.mjs": {
+    "mtime": 1789582393.0162878,
+    "seen": 1790020055.029748,
+    "ast_hash": "08f96cc138819a69629df973c42ee4f3",
+    "semantic_hash": "08f96cc138819a69629df973c42ee4f3"
+  },
+  "scripts/make-icons.mjs": {
+    "mtime": 1789584899.1487231,
+    "seen": 1790020055.0297484,
+    "ast_hash": "5dc48597f3eb9637555a030448e1d6c3",
+    "semantic_hash": "5dc48597f3eb9637555a030448e1d6c3"
+  },
+  "src/actions/mute.ts": {
+    "mtime": 1789584980.812712,
+    "seen": 1790020055.0297492,
+    "ast_hash": "9d5b0f94f0cdcd92053037fa9a75b824",
+    "semantic_hash": "9d5b0f94f0cdcd92053037fa9a75b824"
+  },
+  "src/actions/now-playing.ts": {
+    "mtime": 1790019508.3123014,
+    "seen": 1790020055.0297503,
+    "ast_hash": "30be4fa03cab4038b459e6a1053140c7",
+    "semantic_hash": "30be4fa03cab4038b459e6a1053140c7"
+  },
+  "src/actions/play-media.ts": {
+    "mtime": 1789584822.784483,
+    "seen": 1790020055.029752,
+    "ast_hash": "fb465df7255f279b6a9f0f7b2c10224f",
+    "semantic_hash": "fb465df7255f279b6a9f0f7b2c10224f"
+  },
+  "src/actions/play-pause.ts": {
+    "mtime": 1789582432.4585905,
+    "seen": 1790020055.0297534,
+    "ast_hash": "d5ff85857cfc799131dcf14870adc7c5",
+    "semantic_hash": "d5ff85857cfc799131dcf14870adc7c5"
+  },
+  "src/actions/simple-controls.ts": {
+    "mtime": 1789584968.5539653,
+    "seen": 1790020055.0297546,
+    "ast_hash": "c68f6c99650a40344d3f69db2b6ff1de",
+    "semantic_hash": "c68f6c99650a40344d3f69db2b6ff1de"
+  },
+  "src/now-playing-service.ts": {
+    "mtime": 1789675460.339366,
+    "seen": 1790020055.0297558,
+    "ast_hash": "0645278c1e8b4a4675b9a763f7cee5e2",
+    "semantic_hash": "0645278c1e8b4a4675b9a763f7cee5e2"
+  },
+  "src/plugin.ts": {
+    "mtime": 1789584986.0527189,
+    "seen": 1790020055.029757,
+    "ast_hash": "05397e24b9af405aaa272fc78ac63c38",
+    "semantic_hash": "05397e24b9af405aaa272fc78ac63c38"
+  },
+  "src/text-metrics.ts": {
+    "mtime": 1790019468.5441384,
+    "seen": 1790020055.0297582,
+    "ast_hash": "cd9b026ab009bb4b8744661c70c80cbe",
+    "semantic_hash": "cd9b026ab009bb4b8744661c70c80cbe"
+  },
+  "tsconfig.json": {
+    "mtime": 1789578410.0202267,
+    "seen": 1790020055.0297594,
+    "ast_hash": "a3cb2d3f5db69c81a5a4097d2b2dc82b",
+    "semantic_hash": "a3cb2d3f5db69c81a5a4097d2b2dc82b"
+  },
+  "README.fr.md": {
+    "mtime": 1789682431.2292585,
+    "seen": 1790020055.0297608,
+    "ast_hash": "b9e24f1662bfa9ae0248431da353c778",
+    "semantic_hash": "b9e24f1662bfa9ae0248431da353c778"
+  },
+  "README.md": {
+    "mtime": 1789682444.2666383,
+    "seen": 1790020055.029762,
+    "ast_hash": "68f2640c40fc57bc122a038e56896c99",
+    "semantic_hash": "68f2640c40fc57bc122a038e56896c99"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/ui/now-playing.html": {
+    "mtime": 1789578410.0299914,
+    "seen": 1790020055.0297632,
+    "ast_hash": "1dfa0801a67b17feddb1ef2b7995b5a9",
+    "semantic_hash": "1dfa0801a67b17feddb1ef2b7995b5a9"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/ui/play-media.html": {
+    "mtime": 1789584161.1296134,
+    "seen": 1790020055.0297644,
+    "ast_hash": "5151ad80df456da507e8e0258f2a354e",
+    "semantic_hash": "5151ad80df456da507e8e0258f2a354e"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/control/mute.png": {
+    "mtime": 1789584902.9210384,
+    "seen": 1790020055.0297656,
+    "ast_hash": "db32e0d836aeef2ec092cb3f73383aeb",
+    "semantic_hash": "db32e0d836aeef2ec092cb3f73383aeb"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/control/mute@2x.png": {
+    "mtime": 1789584902.9236968,
+    "seen": 1790020055.0297663,
+    "ast_hash": "988bb0b4f110e2af8847e91892fb9d0d",
+    "semantic_hash": "988bb0b4f110e2af8847e91892fb9d0d"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/control/next.png": {
+    "mtime": 1789584902.9049766,
+    "seen": 1790020055.0297673,
+    "ast_hash": "2d81e6e81012eabf80d9aa5064a0b717",
+    "semantic_hash": "2d81e6e81012eabf80d9aa5064a0b717"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/control/next@2x.png": {
+    "mtime": 1789584902.9085617,
+    "seen": 1790020055.029768,
+    "ast_hash": "2207f844c217b27e937228643c253bbd",
+    "semantic_hash": "2207f844c217b27e937228643c253bbd"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/control/pause.png": {
+    "mtime": 1789584902.9133549,
+    "seen": 1790020055.0297687,
+    "ast_hash": "e91b17582e6a0284ad478b7670a34cc6",
+    "semantic_hash": "e91b17582e6a0284ad478b7670a34cc6"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/control/pause@2x.png": {
+    "mtime": 1789584902.9148817,
+    "seen": 1790020055.0297692,
+    "ast_hash": "e1c015144a426e0f694eebb255f1d6d9",
+    "semantic_hash": "e1c015144a426e0f694eebb255f1d6d9"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/control/play.png": {
+    "mtime": 1789584902.909583,
+    "seen": 1790020055.02977,
+    "ast_hash": "7735a9bb08c7eea70def9f22aafd9385",
+    "semantic_hash": "7735a9bb08c7eea70def9f22aafd9385"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/control/play@2x.png": {
+    "mtime": 1789584902.9123237,
+    "seen": 1790020055.0297709,
+    "ast_hash": "29b0c743306094de69ae397c074a6c53",
+    "semantic_hash": "29b0c743306094de69ae397c074a6c53"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/control/prev.png": {
+    "mtime": 1789584902.9003773,
+    "seen": 1790020055.0297716,
+    "ast_hash": "2dc962fdcf2762eb488a67d5c19e27b7",
+    "semantic_hash": "2dc962fdcf2762eb488a67d5c19e27b7"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/control/prev@2x.png": {
+    "mtime": 1789584902.9039578,
+    "seen": 1790020055.029772,
+    "ast_hash": "574a98cd568deb728bf4016fa5508ca9",
+    "semantic_hash": "574a98cd568deb728bf4016fa5508ca9"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/control/unmute.png": {
+    "mtime": 1789584902.9247148,
+    "seen": 1790020055.0297728,
+    "ast_hash": "47d99df46f4abb964b78258068cf08af",
+    "semantic_hash": "47d99df46f4abb964b78258068cf08af"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/control/unmute@2x.png": {
+    "mtime": 1789584902.9278722,
+    "seen": 1790020055.0297732,
+    "ast_hash": "340a531d689a6ff3750cec8c09050fa2",
+    "semantic_hash": "340a531d689a6ff3750cec8c09050fa2"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/control/volume-down.png": {
+    "mtime": 1789584902.917992,
+    "seen": 1790020055.0297747,
+    "ast_hash": "15b8a296316ab80a15eaef1372d6c222",
+    "semantic_hash": "15b8a296316ab80a15eaef1372d6c222"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/control/volume-down@2x.png": {
+    "mtime": 1789584902.9195147,
+    "seen": 1790020055.0297751,
+    "ast_hash": "b4b6e9f5f6ce0c81bb699b4ec3006b10",
+    "semantic_hash": "b4b6e9f5f6ce0c81bb699b4ec3006b10"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/control/volume-up.png": {
+    "mtime": 1789584902.9159067,
+    "seen": 1790020055.0297759,
+    "ast_hash": "9b06dc266b61ad901789774b24a14684",
+    "semantic_hash": "9b06dc266b61ad901789774b24a14684"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/control/volume-up@2x.png": {
+    "mtime": 1789584902.9174826,
+    "seen": 1790020055.0297766,
+    "ast_hash": "ca2b87962a2ca8eea0af2c85b7c13c29",
+    "semantic_hash": "ca2b87962a2ca8eea0af2c85b7c13c29"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/now-playing/icon.png": {
+    "mtime": 1789582397.311558,
+    "seen": 1790020055.029777,
+    "ast_hash": "45d2e1985c259e6a2aab6c19cce496b2",
+    "semantic_hash": "45d2e1985c259e6a2aab6c19cce496b2"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/now-playing/icon@2x.png": {
+    "mtime": 1789582397.5144963,
+    "seen": 1790020055.029778,
+    "ast_hash": "a6a33f36fd89db4a12e3979fb9788e64",
+    "semantic_hash": "a6a33f36fd89db4a12e3979fb9788e64"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/now-playing/key.png": {
+    "mtime": 1789582397.7202697,
+    "seen": 1790020055.0297785,
+    "ast_hash": "988d33c56a38df087250cf5da579554d",
+    "semantic_hash": "988d33c56a38df087250cf5da579554d"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/now-playing/key@2x.png": {
+    "mtime": 1789582397.926146,
+    "seen": 1790020055.0297792,
+    "ast_hash": "2708915ddbb44deff018668778953aaa",
+    "semantic_hash": "2708915ddbb44deff018668778953aaa"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/actions/now-playing/pause-overlay.png": {
+    "mtime": 1789584902.8967345,
+    "seen": 1790020055.0297801,
+    "ast_hash": "4a17d73cf30b022f0efe38f3ab93bed6",
+    "semantic_hash": "4a17d73cf30b022f0efe38f3ab93bed6"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/plugin/category-icon.png": {
+    "mtime": 1789582396.9051065,
+    "seen": 1790020055.0297825,
+    "ast_hash": "d9442e507ac73b82dfa1f1c1f2516fa9",
+    "semantic_hash": "d9442e507ac73b82dfa1f1c1f2516fa9"
+  },
+  "com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/plugin/category-icon@2x.png": {
+    "mtime": 1789582397.1080596,
+    "seen": 1790020055.0297835,
+    "ast_hash": "fb8185364cae8b5c51e2488652dd14f9",
+    "semantic_hash": "fb8185364cae8b5c51e2488652dd14f9"
+  }
+}
