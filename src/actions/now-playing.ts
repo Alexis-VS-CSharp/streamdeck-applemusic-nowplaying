@@ -19,15 +19,26 @@ type FieldState = {
 	hold: number;
 };
 
+// Position interpolee entre deux polls du bridge (1.5s) pour un compteur fluide.
+type Timeline = {
+	baseMs: number;
+	baseAt: number;
+	durationMs: number;
+	playing: boolean;
+};
+
 type DialState = {
 	title: FieldState;
 	artist: FieldState;
 	paused: boolean;
+	timeline: Timeline;
+	shownElapsed: string;
 };
 
 const DEFAULT_FILTER = "Apple";
 const SCROLL_INTERVAL_MS = 400;
 const SCROLL_HOLD_TICKS = 5; // pause a chaque retour a 0 (5 * 400ms = 2s)
+const RESYNC_THRESHOLD_MS = 1500; // ecart max poll/interpolation avant de resynchroniser
 const CLICK_WINDOW_MS = 350; // 1 clic = pause/lecture, 2 = suivant, 3+ = precedent
 
 const TITLE_WINDOW = 13;
@@ -63,6 +74,23 @@ function formatTime(ms: number): string {
 	const m = Math.floor((total % 3600) / 60);
 	const ss = String(total % 60).padStart(2, "0");
 	return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`;
+}
+
+function positionOf(t: Timeline): number {
+	const pos = t.playing ? t.baseMs + (Date.now() - t.baseAt) : t.baseMs;
+	return Math.min(t.durationMs, Math.max(0, pos));
+}
+
+function timeFeedback(t: Timeline): { progress: number; elapsed: string; remaining: string } {
+	if (t.durationMs <= 0) {
+		return { progress: 0, elapsed: "", remaining: "" };
+	}
+	const pos = positionOf(t);
+	return {
+		progress: (pos / t.durationMs) * 100,
+		elapsed: formatTime(pos),
+		remaining: `-${formatTime(Math.ceil((t.durationMs - pos) / 1000) * 1000)}`
+	};
 }
 
 function makeFieldState(text: string): FieldState {
@@ -183,35 +211,42 @@ export class NowPlayingAction extends SingletonAction<NowPlayingSettings> {
 			const title = data.title?.trim() || "?";
 			const artist = formatArtists(cleanArtist(data.artist));
 			const paused = data.status === "Paused";
+			const polled = Math.max(0, data.positionMs ?? 0);
 			const duration = data.durationMs ?? 0;
-			const position = Math.min(duration, Math.max(0, data.positionMs ?? 0));
-			const progress = duration > 0 ? (position / duration) * 100 : 0;
-			const elapsed = duration > 0 ? formatTime(position) : "";
-			const remaining = duration > 0 ? `-${formatTime(duration - position)}` : "";
 			const previous = this.dialState.get(visibleAction.id);
 			const trackChanged = !previous || previous.title.text !== title || previous.artist.text !== artist;
 
-			if (trackChanged) {
-				this.dialState.set(visibleAction.id, {
-					title: makeFieldState(title),
-					artist: makeFieldState(artist),
-					paused
-				});
-			} else {
-				previous!.paused = paused;
-			}
+			// Garde l'interpolation en cours tant que le poll (arrondi a la seconde)
+			// est coherent avec elle ; sinon (piste, pause/lecture, seek) on resynchronise.
+			const prevTimeline = previous?.timeline;
+			const keepTimeline =
+				!trackChanged &&
+				prevTimeline !== undefined &&
+				prevTimeline.playing === !paused &&
+				prevTimeline.durationMs === duration &&
+				Math.abs(positionOf(prevTimeline) - polled) <= RESYNC_THRESHOLD_MS;
+			const timeline: Timeline = keepTimeline
+				? prevTimeline
+				: { baseMs: polled, baseAt: Date.now(), durationMs: duration, playing: !paused };
+
 			// Ne PAS repartir a la position 0 ici : le scroll est deja gere par
 			// tickScroll() toutes les 400ms. Rappeler scrollText(title, 0) a
 			// chaque poll (1.5s) l'ecrasait et faisait "sauter" le texte au debut.
-			const state = this.dialState.get(visibleAction.id)!;
+			const state: DialState = trackChanged
+				? { title: makeFieldState(title), artist: makeFieldState(artist), paused, timeline, shownElapsed: "" }
+				: previous;
+			state.paused = paused;
+			state.timeline = timeline;
+			this.dialState.set(visibleAction.id, state);
+
+			const time = timeFeedback(timeline);
+			state.shownElapsed = time.elapsed;
 
 			await visibleAction.setFeedback({
 				title: scrollText(state.title.text, state.title.pos, TITLE_WINDOW, TITLE_SEPARATOR),
 				artist: scrollText(state.artist.text, state.artist.pos, ARTIST_WINDOW, ARTIST_SEPARATOR) || "Apple Music",
 				pauseIcon: { enabled: paused },
-				progress,
-				elapsed,
-				remaining,
+				...time,
 				...(data.thumbnail && data.thumbMime ? { cover: `data:${data.thumbMime};base64,${data.thumbnail}` } : {})
 			});
 		}
@@ -243,11 +278,15 @@ export class NowPlayingAction extends SingletonAction<NowPlayingSettings> {
 
 			const titleChanged = tickField(state.title, TITLE_WINDOW, TITLE_SEPARATOR);
 			const artistChanged = tickField(state.artist, ARTIST_WINDOW, ARTIST_SEPARATOR);
-			if (!titleChanged && !artistChanged) {
+			const time = timeFeedback(state.timeline);
+			const timeChanged = time.elapsed !== state.shownElapsed;
+			if (!titleChanged && !artistChanged && !timeChanged) {
 				continue;
 			}
+			state.shownElapsed = time.elapsed;
 
 			await visibleAction.setFeedback({
+				...(timeChanged ? time : {}),
 				...(titleChanged ? { title: scrollText(state.title.text, state.title.pos, TITLE_WINDOW, TITLE_SEPARATOR) } : {}),
 				...(artistChanged
 					? { artist: scrollText(state.artist.text, state.artist.pos, ARTIST_WINDOW, ARTIST_SEPARATOR) }
