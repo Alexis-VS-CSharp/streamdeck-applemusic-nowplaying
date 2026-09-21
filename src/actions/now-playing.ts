@@ -303,10 +303,8 @@ export class NowPlayingAction extends SingletonAction<NowPlayingSettings> {
 
 			await visibleAction.setFeedback({
 				...(timeChanged ? time : {}),
-				...(titleChanged ? { title: scrollText(state.title.text, state.title.pos, TITLE_WINDOW, TITLE_SEPARATOR) } : {}),
-				...(artistChanged
-					? { artist: scrollText(state.artist.text, state.artist.pos, ARTIST_WINDOW, ARTIST_SEPARATOR) }
-					: {})
+				...(titleChanged ? { title: scrollText(state.title.text, state.title.pos, TITLE_SPEC) } : {}),
+				...(artistChanged ? { artist: scrollText(state.artist.text, state.artist.pos, ARTIST_SPEC) } : {})
 			});
 		}
 	}
