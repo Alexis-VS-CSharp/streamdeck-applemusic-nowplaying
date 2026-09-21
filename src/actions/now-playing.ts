@@ -8,6 +8,7 @@ import {
 	WillDisappearEvent
 } from "@elgato/streamdeck";
 import { nowPlayingService, NowPlayingPayload } from "../now-playing-service";
+import { textWidthPx } from "../text-metrics";
 
 type NowPlayingSettings = {
 	filter?: string;
@@ -41,10 +42,11 @@ const SCROLL_HOLD_TICKS = 5; // pause a chaque retour a 0 (5 * 400ms = 2s)
 const RESYNC_THRESHOLD_MS = 1500; // ecart max poll/interpolation avant de resynchroniser
 const CLICK_WINDOW_MS = 350; // 1 clic = pause/lecture, 2 = suivant, 3+ = precedent
 
-const TITLE_WINDOW = 13;
-const TITLE_SEPARATOR = " — "; // tiret cadratin pour bien marquer la boucle du titre
-const ARTIST_WINDOW = 16;
-const ARTIST_SEPARATOR = " ";
+// Defilement en pixels (rect du layout = 90px, marge de securite incluse) :
+// les majuscules sont bien plus larges que les minuscules.
+type ScrollSpec = { fontPx: number; semibold: boolean; maxPx: number; separator: string };
+const TITLE_SPEC: ScrollSpec = { fontPx: 15, semibold: true, maxPx: 86, separator: " — " }; // tiret cadratin pour marquer la boucle
+const ARTIST_SPEC: ScrollSpec = { fontPx: 12, semibold: false, maxPx: 86, separator: " " };
 
 /**
  * Le champ "Artist" expose par Apple Music via SMTC contient parfois
@@ -97,26 +99,40 @@ function makeFieldState(text: string): FieldState {
 	return { text, pos: 0, hold: SCROLL_HOLD_TICKS };
 }
 
-/** Defilement circulaire : le texte boucle sur lui-meme (separe par `separator`) jusqu'a revenir exactement au debut. */
-function scrollText(text: string, pos: number, window: number, separator: string): string {
-	if (text.length <= window) {
+function fits(text: string, spec: ScrollSpec): boolean {
+	return textWidthPx(text, spec.fontPx, spec.semibold) <= spec.maxPx;
+}
+
+/** Defilement circulaire : le texte boucle sur lui-meme (separe par `spec.separator`), la fenetre visible fait au plus `spec.maxPx` pixels. */
+function scrollText(text: string, pos: number, spec: ScrollSpec): string {
+	if (fits(text, spec)) {
 		return text;
 	}
-	const cycle = text + separator;
-	const looped = cycle + cycle;
-	return looped.slice(pos, pos + window);
+	const cycle = text + spec.separator;
+	let out = "";
+	let width = 0;
+	for (let i = 0; i < cycle.length; i++) {
+		const ch = cycle[(pos + i) % cycle.length];
+		const w = textWidthPx(ch, spec.fontPx, spec.semibold);
+		if (width + w > spec.maxPx) {
+			break;
+		}
+		out += ch;
+		width += w;
+	}
+	return out;
 }
 
 /** Avance un FieldState d'un cran ; renvoie true si le texte affiche a change. */
-function tickField(state: FieldState, window: number, separator: string): boolean {
-	if (state.text.length <= window) {
+function tickField(state: FieldState, spec: ScrollSpec): boolean {
+	if (fits(state.text, spec)) {
 		return false;
 	}
 	if (state.hold > 0) {
 		state.hold -= 1;
 		return false;
 	}
-	const cycle = state.text + separator;
+	const cycle = state.text + spec.separator;
 	const cycleLen = cycle.length;
 	let next = state.pos + 1;
 	if (next >= cycleLen) {
@@ -243,8 +259,8 @@ export class NowPlayingAction extends SingletonAction<NowPlayingSettings> {
 			state.shownElapsed = time.elapsed;
 
 			await visibleAction.setFeedback({
-				title: scrollText(state.title.text, state.title.pos, TITLE_WINDOW, TITLE_SEPARATOR),
-				artist: scrollText(state.artist.text, state.artist.pos, ARTIST_WINDOW, ARTIST_SEPARATOR) || "Apple Music",
+				title: scrollText(state.title.text, state.title.pos, TITLE_SPEC),
+				artist: scrollText(state.artist.text, state.artist.pos, ARTIST_SPEC) || "Apple Music",
 				pauseIcon: { enabled: paused },
 				...time,
 				...(data.thumbnail && data.thumbMime ? { cover: `data:${data.thumbMime};base64,${data.thumbnail}` } : {})
@@ -276,8 +292,8 @@ export class NowPlayingAction extends SingletonAction<NowPlayingSettings> {
 				continue;
 			}
 
-			const titleChanged = tickField(state.title, TITLE_WINDOW, TITLE_SEPARATOR);
-			const artistChanged = tickField(state.artist, ARTIST_WINDOW, ARTIST_SEPARATOR);
+			const titleChanged = tickField(state.title, TITLE_SPEC);
+			const artistChanged = tickField(state.artist, ARTIST_SPEC);
 			const time = timeFeedback(state.timeline);
 			const timeChanged = time.elapsed !== state.shownElapsed;
 			if (!titleChanged && !artistChanged && !timeChanged) {

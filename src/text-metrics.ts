@@ -337,7 +337,7 @@ const UNKNOWN_GLYPH_EM = 1; // CJK, emoji...: larges, on prefere surestimer
 export function textWidthPx(text: string, fontPx: number, semibold: boolean): number {
 	let em = 0;
 	for (const ch of text) {
-		em += GLYPH_EM[`\u${ch.codePointAt(0)!.toString(16).padStart(4, "0")}`]?.[semibold ? 1 : 0] ?? UNKNOWN_GLYPH_EM;
+		em += GLYPH_EM[ch]?.[semibold ? 1 : 0] ?? UNKNOWN_GLYPH_EM;
 	}
 	return em * fontPx;
 }
