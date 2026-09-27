@@ -9,6 +9,13 @@ using Windows.Storage.Streams;
 
 public static class NowPlayingBridge
 {
+    // Cache la pochette entre deux polls (toutes les 1.5s) : la retelecharger
+    // et la re-encoder en base64 a chaque appel pendant qu'un meme morceau
+    // joue faisait tourner le bridge a 30-60% CPU pour rien.
+    private static string lastThumbKey = null;
+    private static string lastThumbB64 = null;
+    private static string lastThumbMime = null;
+
     private static T Await<T>(IAsyncOperation<T> op)
     {
         while (op.Status == AsyncStatus.Started) System.Threading.Thread.Sleep(5);
@@ -37,29 +44,43 @@ public static class NowPlayingBridge
             long positionMs = (long)timeline.Position.TotalMilliseconds;
             long durationMs = (long)(timeline.EndTime - timeline.StartTime).TotalMilliseconds;
 
-            string thumbB64 = null, thumbMime = null;
-            if (props.Thumbnail != null)
+            string thumbKey = props.Title + "" + props.Artist + "" + props.AlbumTitle;
+            string thumbB64, thumbMime;
+            if (thumbKey == lastThumbKey)
             {
-                try
+                thumbB64 = lastThumbB64;
+                thumbMime = lastThumbMime;
+            }
+            else
+            {
+                thumbB64 = null;
+                thumbMime = null;
+                if (props.Thumbnail != null)
                 {
-                    using (var stream = Await(props.Thumbnail.OpenReadAsync()))
+                    try
                     {
-                        uint size = (uint)stream.Size;
-                        if (size > 0 && size < 5 * 1024 * 1024)
+                        using (var stream = Await(props.Thumbnail.OpenReadAsync()))
                         {
-                            IBuffer buffer = new Windows.Storage.Streams.Buffer(size);
-                            buffer = AwaitProgress(stream.ReadAsync(buffer, size, InputStreamOptions.None));
-                            var reader = DataReader.FromBuffer(buffer);
-                            var bytes = new byte[buffer.Length];
-                            reader.ReadBytes(bytes);
-                            thumbB64 = Convert.ToBase64String(bytes);
-                            thumbMime = (bytes.Length >= 4 && bytes[0] == 0x89 && bytes[1] == 0x50)
-                                ? "image/png"
-                                : "image/jpeg";
+                            uint size = (uint)stream.Size;
+                            if (size > 0 && size < 5 * 1024 * 1024)
+                            {
+                                IBuffer buffer = new Windows.Storage.Streams.Buffer(size);
+                                buffer = AwaitProgress(stream.ReadAsync(buffer, size, InputStreamOptions.None));
+                                var reader = DataReader.FromBuffer(buffer);
+                                var bytes = new byte[buffer.Length];
+                                reader.ReadBytes(bytes);
+                                thumbB64 = Convert.ToBase64String(bytes);
+                                thumbMime = (bytes.Length >= 4 && bytes[0] == 0x89 && bytes[1] == 0x50)
+                                    ? "image/png"
+                                    : "image/jpeg";
+                            }
                         }
                     }
+                    catch { }
                 }
-                catch { }
+                lastThumbKey = thumbKey;
+                lastThumbB64 = thumbB64;
+                lastThumbMime = thumbMime;
             }
 
             var sb = new StringBuilder();
