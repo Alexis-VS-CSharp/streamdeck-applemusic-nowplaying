@@ -16,6 +16,21 @@ public static class NowPlayingBridge
     private static string lastThumbB64 = null;
     private static string lastThumbMime = null;
 
+    // Re-demander un nouveau SessionManager a chaque poll (toutes les 1.5s,
+    // des milliers de fois sur une session) accumulait une charge CPU
+    // croissante au fil du temps (COM/WinRT non libere correctement) :
+    // un seul manager est demande et reutilise pour toute la duree du process.
+    private static GlobalSystemMediaTransportControlsSessionManager cachedManager = null;
+
+    private static GlobalSystemMediaTransportControlsSessionManager GetManager()
+    {
+        if (cachedManager == null)
+        {
+            cachedManager = Await(GlobalSystemMediaTransportControlsSessionManager.RequestAsync());
+        }
+        return cachedManager;
+    }
+
     private static T Await<T>(IAsyncOperation<T> op)
     {
         while (op.Status == AsyncStatus.Started) System.Threading.Thread.Sleep(5);
@@ -34,7 +49,7 @@ public static class NowPlayingBridge
     {
         try
         {
-            var manager = Await(GlobalSystemMediaTransportControlsSessionManager.RequestAsync());
+            var manager = GetManager();
             var session = PickSession(manager, filter);
             if (session == null) return "{\"hasSession\":false}";
 
@@ -154,7 +169,7 @@ public static class NowPlayingBridge
             if (action == "VolumeUp") { AppleMusicVolume.Adjust(0.05f); return; }
             if (action == "VolumeDown") { AppleMusicVolume.Adjust(-0.05f); return; }
 
-            var manager = Await(GlobalSystemMediaTransportControlsSessionManager.RequestAsync());
+            var manager = GetManager();
             var session = PickSession(manager, filter);
             if (session == null) return;
             switch (action)
