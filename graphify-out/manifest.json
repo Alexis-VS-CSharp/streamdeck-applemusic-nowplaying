@@ -1,9 +1,9 @@
 {
   "build-bridge/NowPlayingBridge.cs": {
-    "mtime": 1789675096.549998,
-    "seen": 1790020055.0297348,
-    "ast_hash": "c143cd667c0af058335be67f7e2b3b6f",
-    "semantic_hash": "c143cd667c0af058335be67f7e2b3b6f"
+    "mtime": 1790539352.0821059,
+    "seen": 1790629810.4772596,
+    "ast_hash": "4f6262b914882e6decad78745dea155c",
+    "semantic_hash": "4f6262b914882e6decad78745dea155c"
   },
   "build-bridge/build.ps1": {
     "mtime": 1789583400.707932,
