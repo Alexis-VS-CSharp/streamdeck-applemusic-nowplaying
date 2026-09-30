@@ -24,6 +24,6 @@ SOFTWARE.
 
 "Apple Music" and the Apple Music logo are trademarks of Apple Inc. This
 project is not affiliated with, endorsed by, or sponsored by Apple Inc. The
-small Apple Music icons bundled under `com.alexismartin.applemusic-nowplaying.sdPlugin/imgs/`
+small Apple Music icons bundled under `com.alexisvscsharp.nowplaying.sdPlugin/imgs/`
 are used solely to visually identify the app this plugin controls, and are
 not covered by the MIT license above — they remain the property of Apple Inc.

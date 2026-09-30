@@ -8,7 +8,7 @@ import { nowPlayingService } from "../now-playing-service";
  * rouvrir le flyout volume d'Apple Music en permanence, donc l'icone ne se
  * met a jour qu'au moment ou l'utilisateur appuie sur le bouton.
  */
-@action({ UUID: "com.alexismartin.applemusic-nowplaying.mute" })
+@action({ UUID: "com.alexisvscsharp.nowplaying.mute" })
 export class MuteAction extends SingletonAction {
 	override async onKeyDown(): Promise<void> {
 		const output = await nowPlayingService.controlWithOutput("VolumeMute");

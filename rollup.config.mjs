@@ -8,7 +8,7 @@ const isWatch = !!process.env.ROLLUP_WATCH;
 export default {
   input: "src/plugin.ts",
   output: {
-    file: "com.alexismartin.applemusic-nowplaying.sdPlugin/bin/plugin.js",
+    file: "com.alexisvscsharp.nowplaying.sdPlugin/bin/plugin.js",
     format: "cjs",
     sourcemap: isWatch
   },

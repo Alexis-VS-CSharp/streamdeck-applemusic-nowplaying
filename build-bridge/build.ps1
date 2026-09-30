@@ -16,6 +16,6 @@ $wpf = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\WPF"
 	"$dir\NowPlayingBridge.cs"
 
 if ($LASTEXITCODE -eq 0) {
-	Copy-Item "$dir\NowPlayingBridge.exe" "$dir\..\com.alexismartin.applemusic-nowplaying.sdPlugin\resources\NowPlayingBridge.exe" -Force
+	Copy-Item "$dir\NowPlayingBridge.exe" "$dir\..\com.alexisvscsharp.nowplaying.sdPlugin\resources\NowPlayingBridge.exe" -Force
 	Write-Host "OK: bridge recompile et copie dans le plugin."
 }

@@ -152,7 +152,7 @@ function tickField(state: FieldState, spec: ScrollSpec): boolean {
 	return true;
 }
 
-@action({ UUID: "com.alexismartin.applemusic-nowplaying.nowplaying" })
+@action({ UUID: "com.alexisvscsharp.nowplaying.nowplaying" })
 export class NowPlayingAction extends SingletonAction<NowPlayingSettings> {
 	private scrollTimer: NodeJS.Timeout | null = null;
 	private dialState = new Map<string, DialState>();

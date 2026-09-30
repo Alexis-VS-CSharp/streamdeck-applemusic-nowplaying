@@ -6,7 +6,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 const svgPath =
 	"am-icon-pack/Apple Music_Icon_2020/AppleMusic_Icon_Color/RGB/SVG/Large/Apple_Music_Icon_RGB_lg_073120.svg";
 const svg = readFileSync(svgPath);
-const base = "com.alexismartin.applemusic-nowplaying.sdPlugin";
+const base = "com.alexisvscsharp.nowplaying.sdPlugin";
 
 function render(size, outPath) {
 	const resvg = new Resvg(svg, { fitTo: { mode: "width", value: size } });

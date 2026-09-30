@@ -11,7 +11,7 @@ function simpleControl(uuid: string, controlAction: ControlAction) {
 	return SimpleControlAction;
 }
 
-export const PreviousAction = simpleControl("com.alexismartin.applemusic-nowplaying.previous", "Previous");
-export const NextAction = simpleControl("com.alexismartin.applemusic-nowplaying.next", "Next");
-export const VolumeUpAction = simpleControl("com.alexismartin.applemusic-nowplaying.volume-up", "VolumeUp");
-export const VolumeDownAction = simpleControl("com.alexismartin.applemusic-nowplaying.volume-down", "VolumeDown");
+export const PreviousAction = simpleControl("com.alexisvscsharp.nowplaying.previous", "Previous");
+export const NextAction = simpleControl("com.alexisvscsharp.nowplaying.next", "Next");
+export const VolumeUpAction = simpleControl("com.alexisvscsharp.nowplaying.volume-up", "VolumeUp");
+export const VolumeDownAction = simpleControl("com.alexisvscsharp.nowplaying.volume-down", "VolumeDown");

@@ -301,7 +301,7 @@ function save(path, canvas) {
 	console.log("wrote", path);
 }
 
-const base = "com.alexismartin.applemusic-nowplaying.sdPlugin";
+const base = "com.alexisvscsharp.nowplaying.sdPlugin";
 const control = `${base}/imgs/actions/control`;
 
 save(`${base}/imgs/actions/now-playing/pause-overlay.png`, pauseOverlay(100));

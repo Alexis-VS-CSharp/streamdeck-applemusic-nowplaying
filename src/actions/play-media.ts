@@ -36,7 +36,7 @@ async function fetchCover(url: string): Promise<string | undefined> {
 	return `data:${contentType};base64,${buffer.toString("base64")}`;
 }
 
-@action({ UUID: "com.alexismartin.applemusic-nowplaying.play-media" })
+@action({ UUID: "com.alexisvscsharp.nowplaying.play-media" })
 export class PlayMediaAction extends SingletonAction<PlayMediaSettings> {
 	override async onWillAppear(ev: WillAppearEvent<PlayMediaSettings>): Promise<void> {
 		await this.refresh(ev.action, ev.payload.settings);

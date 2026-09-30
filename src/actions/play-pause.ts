@@ -1,7 +1,7 @@
 import { action, SingletonAction, WillAppearEvent, WillDisappearEvent } from "@elgato/streamdeck";
 import { nowPlayingService, NowPlayingPayload } from "../now-playing-service";
 
-@action({ UUID: "com.alexismartin.applemusic-nowplaying.playpause" })
+@action({ UUID: "com.alexisvscsharp.nowplaying.playpause" })
 export class PlayPauseAction extends SingletonAction {
 	private onUpdate = (data: NowPlayingPayload) => void this.render(data);
 

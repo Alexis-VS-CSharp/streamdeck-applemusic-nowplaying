@@ -44,10 +44,10 @@ npm run build
 Puis lier le plugin au Stream Deck :
 
 ```bash
-npx streamdeck link com.alexismartin.applemusic-nowplaying.sdPlugin
+npx streamdeck link com.alexisvscsharp.nowplaying.sdPlugin
 ```
 
-Redémarrer l'app Stream Deck (ou `npx streamdeck restart com.alexismartin.applemusic-nowplaying`). Les actions apparaissent dans la catégorie **Apple Music Now Playing**.
+Redémarrer l'app Stream Deck (ou `npx streamdeck restart com.alexisvscsharp.nowplaying`). Les actions apparaissent dans la catégorie **Apple Music Now Playing**.
 
 ### Mode développement (rebuild + restart auto)
 
@@ -63,7 +63,7 @@ Nécessaire uniquement si vous modifiez [`build-bridge/NowPlayingBridge.cs`](bui
 powershell -File build-bridge/build.ps1
 ```
 
-Le binaire compilé est copié automatiquement dans `com.alexismartin.applemusic-nowplaying.sdPlugin/resources/`.
+Le binaire compilé est copié automatiquement dans `com.alexisvscsharp.nowplaying.sdPlugin/resources/`.
 
 ### Régénérer le `.streamDeckPlugin`
 
