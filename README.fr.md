@@ -30,7 +30,7 @@ Plugin Stream Deck (Windows) pour piloter **Apple Music for Windows** depuis un 
 
 ## Installation simple (sans dev)
 
-Télécharger le fichier [`com.alexismartin.applemusic-nowplaying.streamDeckPlugin`](com.alexismartin.applemusic-nowplaying.streamDeckPlugin) et double-cliquer dessus : Stream Deck l'installe automatiquement.
+Télécharger le fichier [`now-playing.streamDeckPlugin`](now-playing.streamDeckPlugin) et double-cliquer dessus : Stream Deck l'installe automatiquement.
 
 ## Installation locale (dev)
 
