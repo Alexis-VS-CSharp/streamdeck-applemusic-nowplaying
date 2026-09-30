@@ -35,8 +35,8 @@ Télécharger le fichier [`com.alexismartin.applemusic-nowplaying.streamDeckPlug
 ## Installation locale (dev)
 
 ```bash
-git clone https://github.com/Alexis-VS-CSharp/streamdeck-applemusic-nowplaying.git
-cd streamdeck-applemusic-nowplaying
+git clone https://github.com/Alexis-VS-CSharp/streamdeck-nowplaying.git
+cd streamdeck-nowplaying
 npm install
 npm run build
 ```
