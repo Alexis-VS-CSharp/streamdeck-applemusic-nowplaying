@@ -1,6 +1,6 @@
 {
   "Name": "Apple Music Now Playing",
-  "Author": "Alexis Martin",
+  "Author": "Alexis-VS-CSharp",
   "UUID": "com.alexismartin.applemusic-nowplaying",
   "Icon": "imgs/plugin/category-icon",
   "Description": "Affiche le titre en cours de lecture sur Apple Music (Windows) et permet de mettre en pause/reprendre.",
@@ -28,7 +28,9 @@
       "Icon": "imgs/actions/now-playing/icon",
       "Tooltip": "Affiche le morceau en cours sur Apple Music. Appui = pause/lecture, rotation = piste suivante/précédente.",
       "PropertyInspectorPath": "ui/now-playing.html",
-      "Controllers": ["Encoder"],
+      "Controllers": [
+        "Encoder"
+      ],
       "Encoder": {
         "layout": "layouts/now-playing.json",
         "TriggerDescription": {
@@ -50,48 +52,84 @@
       "UUID": "com.alexismartin.applemusic-nowplaying.playpause",
       "Icon": "imgs/actions/control/pause",
       "Tooltip": "Met en pause ou reprend la lecture Apple Music.",
-      "Controllers": ["Keypad"],
-      "States": [{ "Image": "imgs/actions/control/pause" }]
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/control/pause"
+        }
+      ]
     },
     {
       "Name": "Piste precedente",
       "UUID": "com.alexismartin.applemusic-nowplaying.previous",
       "Icon": "imgs/actions/control/prev",
       "Tooltip": "Piste precedente sur Apple Music.",
-      "Controllers": ["Keypad"],
-      "States": [{ "Image": "imgs/actions/control/prev" }]
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/control/prev"
+        }
+      ]
     },
     {
       "Name": "Piste suivante",
       "UUID": "com.alexismartin.applemusic-nowplaying.next",
       "Icon": "imgs/actions/control/next",
       "Tooltip": "Piste suivante sur Apple Music.",
-      "Controllers": ["Keypad"],
-      "States": [{ "Image": "imgs/actions/control/next" }]
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/control/next"
+        }
+      ]
     },
     {
       "Name": "Volume +",
       "UUID": "com.alexismartin.applemusic-nowplaying.volume-up",
       "Icon": "imgs/actions/control/volume-up",
       "Tooltip": "Augmente le volume systeme.",
-      "Controllers": ["Keypad"],
-      "States": [{ "Image": "imgs/actions/control/volume-up" }]
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/control/volume-up"
+        }
+      ]
     },
     {
       "Name": "Volume -",
       "UUID": "com.alexismartin.applemusic-nowplaying.volume-down",
       "Icon": "imgs/actions/control/volume-down",
       "Tooltip": "Diminue le volume systeme.",
-      "Controllers": ["Keypad"],
-      "States": [{ "Image": "imgs/actions/control/volume-down" }]
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/control/volume-down"
+        }
+      ]
     },
     {
       "Name": "Muet",
       "UUID": "com.alexismartin.applemusic-nowplaying.mute",
       "Icon": "imgs/actions/control/mute",
       "Tooltip": "Coupe/retablit le son d'Apple Music (memorise le volume precedent).",
-      "Controllers": ["Keypad"],
-      "States": [{ "Image": "imgs/actions/control/mute" }]
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/control/mute"
+        }
+      ]
     },
     {
       "Name": "Lancer playlist / album",
@@ -99,8 +137,14 @@
       "Icon": "imgs/actions/now-playing/icon",
       "Tooltip": "Lance une playlist ou un album Apple Music (configurer le lien dans les parametres de l'action).",
       "PropertyInspectorPath": "ui/play-media.html",
-      "Controllers": ["Keypad"],
-      "States": [{ "Image": "imgs/actions/now-playing/key" }]
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/now-playing/key"
+        }
+      ]
     }
   ]
 }

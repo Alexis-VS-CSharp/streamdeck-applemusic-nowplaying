@@ -18,8 +18,8 @@
     "semantic_hash": "e62eedd8f180c97f71808b6d7ceeb830"
   },
   "com.alexismartin.applemusic-nowplaying.sdPlugin/manifest.json": {
-    "mtime": 1789681909.0125446,
-    "seen": 1790020055.0297446,
+    "mtime": 1790788000.502555,
+    "seen": 1790788002.764752,
     "ast_hash": "41cccdc96345022acce8c075eb553832",
     "semantic_hash": "41cccdc96345022acce8c075eb553832"
   },
@@ -30,10 +30,10 @@
     "semantic_hash": "df9ffc6aa3f78a5491736d441c4258a8"
   },
   "package.json": {
-    "mtime": 1789682155.374071,
-    "seen": 1790020055.0297463,
-    "ast_hash": "2ed4ff00b8b2ebb5a9871670a7c5d7e3",
-    "semantic_hash": "2ed4ff00b8b2ebb5a9871670a7c5d7e3"
+    "mtime": 1790787940.4414675,
+    "seen": 1790788002.7647564,
+    "ast_hash": "ef1472cabe11788ccfbdb8f961941e77",
+    "semantic_hash": ""
   },
   "rollup.config.mjs": {
     "mtime": 1789578410.0165045,
@@ -90,10 +90,10 @@
     "semantic_hash": "0645278c1e8b4a4675b9a763f7cee5e2"
   },
   "src/plugin.ts": {
-    "mtime": 1789584986.0527189,
-    "seen": 1790020055.029757,
-    "ast_hash": "05397e24b9af405aaa272fc78ac63c38",
-    "semantic_hash": "05397e24b9af405aaa272fc78ac63c38"
+    "mtime": 1790630340.958199,
+    "seen": 1790788002.7647758,
+    "ast_hash": "3721815c529eac8575e6d21e69920e45",
+    "semantic_hash": ""
   },
   "src/text-metrics.ts": {
     "mtime": 1790019468.5441384,
@@ -108,16 +108,16 @@
     "semantic_hash": "a3cb2d3f5db69c81a5a4097d2b2dc82b"
   },
   "README.fr.md": {
-    "mtime": 1789682431.2292585,
-    "seen": 1790020055.0297608,
-    "ast_hash": "b9e24f1662bfa9ae0248431da353c778",
-    "semantic_hash": "b9e24f1662bfa9ae0248431da353c778"
+    "mtime": 1790787967.2701313,
+    "seen": 1790788002.7647812,
+    "ast_hash": "2a0440311320e2e321053454d607c9b3",
+    "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1789682444.2666383,
-    "seen": 1790020055.029762,
-    "ast_hash": "68f2640c40fc57bc122a038e56896c99",
-    "semantic_hash": "68f2640c40fc57bc122a038e56896c99"
+    "mtime": 1790787959.3297584,
+    "seen": 1790788002.7647831,
+    "ast_hash": "c58a95d6c92aa9915d4bc63817153250",
+    "semantic_hash": ""
   },
   "com.alexismartin.applemusic-nowplaying.sdPlugin/ui/now-playing.html": {
     "mtime": 1789578410.0299914,
